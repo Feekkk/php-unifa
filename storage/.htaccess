@@ -1,0 +1,8 @@
+# Deny direct access to storage files
+Order Deny,Allow
+Deny from all
+
+# Allow PHP scripts to access files
+<FilesMatch "\.(php)$">
+    Allow from all
+</FilesMatch>

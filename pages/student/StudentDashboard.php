@@ -274,7 +274,7 @@ $conn->close();
                     <div class="action-card">
                         <h3>New Application</h3>
                         <p>Apply for financial aid programs</p>
-                        <a href="#" class="btn btn-primary">Apply Now</a>
+                        <a href="ApplicationForm.php" class="btn btn-primary">Apply Now</a>
                     </div>
                     <div class="action-card">
                         <h3>View Applications</h3>
