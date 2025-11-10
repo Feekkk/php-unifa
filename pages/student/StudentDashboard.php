@@ -35,6 +35,14 @@ $result = $stmt->get_result();
 $approvedCount = $result->fetch_assoc()['total'];
 $stmt->close();
 
+// Get rejected applications
+$stmt = $conn->prepare("SELECT COUNT(*) as total FROM applications WHERE user_id = ? AND status = 'rejected'");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$rejectedCount = $result->fetch_assoc()['total'];
+$stmt->close();
+
 $conn->close();
 
 // Check for session messages
@@ -261,11 +269,15 @@ if ($sessionMessage) {
                     <h3>Approved</h3>
                     <p class="stat-value"><?php echo $approvedCount; ?></p>
                 </div>
+                <div class="stat-card">
+                    <h3>Rejected</h3>
+                    <p class="stat-value"><?php echo $rejectedCount; ?></p>
+                </div>
             </div>
 
-            <!-- User Information -->
+            <!-- Profile Section -->
             <div class="dashboard-section">
-                <h2>Your Information</h2>
+                <h2>Your Profile</h2>
                 <div class="user-info">
                     <div class="info-item">
                         <div class="info-label">Full Name</div>
@@ -282,7 +294,7 @@ if ($sessionMessage) {
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Quick Actions Section -->
             <div class="dashboard-section">
                 <h2>Quick Actions</h2>
                 <div class="actions-grid">
