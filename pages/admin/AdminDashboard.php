@@ -246,6 +246,7 @@ if ($sessionMessage) {
             </a>
             <div class="nav-links">
                 <a href="AdminDashboard.php">Dashboard</a>
+                <a href="EditProfile.php">Profile</a>
                 <form method="post" action="../logout.php" style="display: inline;">
                     <button type="submit" class="logout-btn" name="logout">Logout</button>
                 </form>
@@ -321,14 +322,14 @@ if ($sessionMessage) {
                         <a href="#" class="btn btn-primary">View All</a>
                     </div>
                     <div class="action-card">
-                        <h3>Pending Reviews</h3>
-                        <p>Applications awaiting review</p>
-                        <a href="#" class="btn btn-outline">Review Now</a>
-                    </div>
-                    <div class="action-card">
                         <h3>Manage Students</h3>
                         <p>View and manage student accounts</p>
                         <a href="#" class="btn btn-outline">Manage</a>
+                    </div>
+                    <div class="action-card">
+                        <h3>Edit Profile</h3>
+                        <p>Update your admin profile information</p>
+                        <a href="EditProfile.php" class="btn btn-outline">Edit Profile</a>
                     </div>
                 </div>
             </div>
