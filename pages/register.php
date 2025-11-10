@@ -1,3 +1,68 @@
+<?php
+require_once '../config.php';
+
+$error = '';
+$success = '';
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $fullName = trim($_POST['fullName'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $studentId = trim($_POST['studentId'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm'] ?? '';
+    
+    // Validation
+    if (empty($fullName) || empty($email) || empty($studentId) || empty($password)) {
+        $error = 'Please fill in all required fields.';
+    } elseif ($password !== $confirm) {
+        $error = 'Passwords do not match.';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters long.';
+    } else {
+        $conn = getDBConnection();
+        
+        // Check if email already exists
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? OR student_id = ?");
+        $stmt->bind_param("ss", $email, $studentId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $error = 'Email or Student ID already exists.';
+            $stmt->close();
+        } else {
+            // Hash password
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            
+            // Insert user
+            $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, phone, password, role) VALUES (?, ?, ?, ?, ?, 'student')");
+            $stmt->bind_param("sssss", $fullName, $email, $studentId, $phone, $hashedPassword);
+            
+            if ($stmt->execute()) {
+                // Get the newly created user
+                $userId = $conn->insert_id;
+                
+                // Set session
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['user_name'] = $fullName;
+                $_SESSION['user_email'] = $email;
+                $_SESSION['student_id'] = $studentId;
+                $_SESSION['user_role'] = 'student';
+                
+                // Redirect to student dashboard
+                header('Location: student/StudentDashboard.php');
+                exit();
+            } else {
+                $error = 'Registration failed. Please try again.';
+            }
+            $stmt->close();
+        }
+        $conn->close();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +85,17 @@
                 <p class="small muted">Register to apply for financial aid programs</p>
             </div>
             <div class="auth-body">
-                <form method="post" action="#">
+                <?php if ($error): ?>
+                    <div style="background-color: #fee; color: #c33; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fcc;">
+                        <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ($success): ?>
+                    <div style="background-color: #efe; color: #3c3; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfc;">
+                        <?php echo htmlspecialchars($success); ?>
+                    </div>
+                <?php endif; ?>
+                <form method="post" action="">
                     <div class="form-row">
                         <label for="fullName">Full Name</label>
                         <input class="input" type="text" id="fullName" name="fullName" placeholder="Your full name" required />
