@@ -39,6 +39,9 @@ if ($conn->select_db($dbname)) {
     $messages[] = "✗ Error selecting database: " . $conn->error;
 }
 
+// Insert hardcoded admin accounts after tables are created
+// We'll do this after the SQL file is executed
+
 // Read SQL file
 $sqlFile = __DIR__ . '/schema.sql';
 if (!file_exists($sqlFile)) {
@@ -76,6 +79,52 @@ foreach ($statements as $statement) {
         $messages[] = "✗ Error: " . $conn->error;
         $messages[] = "Statement: " . substr($statement, 0, 100);
     }
+}
+
+// Insert hardcoded admin accounts
+$messages[] = "---";
+$messages[] = "Setting up admin accounts...";
+
+// Check if admin table exists
+$adminTableCheck = $conn->query("SHOW TABLES LIKE 'admin'");
+if ($adminTableCheck->num_rows > 0) {
+    // Check if admins already exist
+    $adminCheck = $conn->query("SELECT COUNT(*) as count FROM admin WHERE email IN ('admin@unikl.com', 'admin2@unikl.com')");
+    $adminCount = $adminCheck->fetch_assoc()['count'];
+    
+    if ($adminCount == 0) {
+        // Hash passwords
+        $password1 = password_hash('admin123', PASSWORD_DEFAULT);
+        $password2 = password_hash('admin123', PASSWORD_DEFAULT);
+        
+        // Insert first admin
+        $stmt = $conn->prepare("INSERT INTO admin (name, email, password) VALUES (?, ?, ?)");
+        $name1 = 'Administrator';
+        $email1 = 'admin@unikl.com';
+        $stmt->bind_param("sss", $name1, $email1, $password1);
+        if ($stmt->execute()) {
+            $messages[] = "✓ Created admin account: admin@unikl.com";
+        } else {
+            $messages[] = "✗ Error creating admin account: " . $conn->error;
+        }
+        $stmt->close();
+        
+        // Insert second admin
+        $stmt = $conn->prepare("INSERT INTO admin (name, email, password) VALUES (?, ?, ?)");
+        $name2 = 'Administrator 2';
+        $email2 = 'admin2@unikl.com';
+        $stmt->bind_param("sss", $name2, $email2, $password2);
+        if ($stmt->execute()) {
+            $messages[] = "✓ Created admin account: admin2@unikl.com";
+        } else {
+            $messages[] = "✗ Error creating admin account: " . $conn->error;
+        }
+        $stmt->close();
+    } else {
+        $messages[] = "ℹ Admin accounts already exist";
+    }
+} else {
+    $messages[] = "ℹ Admin table not found, skipping admin account creation";
 }
 
 $conn->close();
@@ -121,6 +170,11 @@ $conn->close();
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
         .btn {
             display: inline-block;
             padding: 10px 20px;
@@ -150,7 +204,15 @@ $conn->close();
         
         <h2>Execution Log:</h2>
         <?php foreach ($messages as $message): ?>
-            <div class="message <?php echo strpos($message, '✗') !== false ? 'error' : 'success'; ?>">
+            <div class="message <?php 
+                if (strpos($message, '✗') !== false) {
+                    echo 'error';
+                } elseif (strpos($message, 'ℹ') !== false || strpos($message, '---') !== false) {
+                    echo 'info';
+                } else {
+                    echo 'success';
+                }
+            ?>">
                 <?php echo htmlspecialchars($message); ?>
             </div>
         <?php endforeach; ?>
