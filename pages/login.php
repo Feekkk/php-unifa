@@ -1,3 +1,88 @@
+<?php
+require_once '../config.php';
+
+// Redirect if already logged in
+if (isLoggedIn()) {
+    $role = $_SESSION['user_role'];
+    switch ($role) {
+        case 'admin':
+            header('Location: admin/AdminDashboard.php');
+            break;
+        case 'committee':
+            header('Location: committee/CommitteeDashboard.php');
+            break;
+        case 'student':
+        default:
+            header('Location: student/StudentDashboard.php');
+            break;
+    }
+    exit();
+}
+
+$error = '';
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $loginId = trim($_POST['studentId'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember']) && $_POST['remember'] === 'on';
+    
+    // Validation
+    if (empty($loginId) || empty($password)) {
+        $error = 'Please enter your Student ID/Email and password.';
+    } else {
+        $conn = getDBConnection();
+        
+        // Check if user exists by email or student_id
+        $stmt = $conn->prepare("SELECT id, full_name, email, student_id, password, role FROM users WHERE email = ? OR student_id = ?");
+        $stmt->bind_param("ss", $loginId, $loginId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+            
+            // Verify password
+            if (password_verify($password, $user['password'])) {
+                // Set session variables
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['full_name'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['student_id'] = $user['student_id'];
+                $_SESSION['user_role'] = $user['role'];
+                
+                // Handle "Remember Me" - set cookie for 30 days
+                if ($remember) {
+                    $cookieValue = base64_encode($user['id'] . ':' . hash('sha256', $user['password']));
+                    setcookie('remember_token', $cookieValue, time() + (30 * 24 * 60 * 60), '/'); // 30 days
+                }
+                
+                // Redirect based on role
+                switch ($user['role']) {
+                    case 'admin':
+                        header('Location: admin/AdminDashboard.php');
+                        break;
+                    case 'committee':
+                        header('Location: committee/CommitteeDashboard.php');
+                        break;
+                    case 'student':
+                    default:
+                        header('Location: student/StudentDashboard.php');
+                        break;
+                }
+                exit();
+            } else {
+                $error = 'Invalid Student ID/Email or password.';
+            }
+        } else {
+            $error = 'Invalid Student ID/Email or password.';
+        }
+        
+        $stmt->close();
+        $conn->close();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,10 +105,15 @@
                 <p class="small muted">Sign in to manage your financial aid applications</p>
             </div>
             <div class="auth-body">
-                <form method="post" action="#">
+                <?php if ($error): ?>
+                    <div style="background-color: #fee; color: #c33; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fcc;">
+                        <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
+                <form method="post" action="">
                     <div class="form-row">
                         <label for="studentId">Student ID / Email</label>
-                        <input class="input" type="text" id="studentId" name="studentId" placeholder="e.g. B12345 or name@unikl.edu.my" required />
+                        <input class="input" type="text" id="studentId" name="studentId" placeholder="e.g. B12345 or name@unikl.edu.my" value="<?php echo isset($_POST['studentId']) ? htmlspecialchars($_POST['studentId']) : ''; ?>" required />
                     </div>
                     <div class="form-row">
                         <label for="password">Password</label>
@@ -44,9 +134,7 @@
         </div>
     </main>
     <script src="../js/main.js"></script>
-    <!-- Note: Wire up actual authentication later (server-side). -->
 </body>
-<!-- c:\laragon\www\unifa\pages\login.php -->
 </html>
 
 
