@@ -186,51 +186,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="site-footer" role="contentinfo">
-        <div class="container footer-grid">
-            <div class="footer-col">
-            <img src="public/rcmp-white.png" alt="UniKL RCMP logo" class="logo" />
-                <p>
-                    UniKL RCMP Financial Aid System dedicated to supporting student wellbeing and success.
-                </p>
-            </div>
-            <div class="footer-col">
-                <h4>Quick Links</h4>
-                <ul class="footer-links">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#applications">Applications</a></li>
-                    <li><a href="#faq">FAQ</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Contact</h4>
-                <ul class="footer-info">
-                    <li>UniKL RCMP, Ipoh, Perak</li>
-                    <li>+60 5-806 2000</li>
-                    <li><a href="mailto:swf@unikl.edu.my">swf@unikl.edu.my</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Office & Social</h4>
-                <ul class="footer-info">
-                    <li>Mon–Fri: 9:00 AM – 5:00 PM</li><br>
-                    <li class="socials">
-                        <a href="#" aria-label="Facebook">FB</a>
-                        <a href="#" aria-label="Instagram">IG</a>
-                        <a href="#" aria-label="Twitter">Tw</a>
-                        <a href="#" aria-label="LinkedIN">Li</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <p>© 2024 UniKL RCMP. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+    <?php include 'pages/component/footer.php'; renderFooter('', true); ?>
 
     <script src="js/main.js"></script>
 </body>

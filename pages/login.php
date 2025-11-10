@@ -96,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <main class="auth-page">
+        <div class="auth-card-wrapper">
         <div class="auth-card">
             <div class="auth-header">
                 <a class="brand-mini" href="../index.php">
@@ -132,7 +133,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="text-center small"><a class="link" href="../index.php">← Back to Home</a></p>
             </div>
         </div>
+        </div>
     </main>
+    <?php include 'component/footer.php'; renderFooter('../'); ?>
     <script src="../js/main.js"></script>
 </body>
 </html>

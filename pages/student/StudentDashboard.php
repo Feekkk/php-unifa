@@ -291,6 +291,7 @@ $conn->close();
         </div>
     </div>
 
+    <?php include '../component/footer.php'; renderFooter('../../'); ?>
     <script src="../../js/main.js"></script>
 </body>
 </html>
