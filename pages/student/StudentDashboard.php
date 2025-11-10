@@ -36,6 +36,14 @@ $approvedCount = $result->fetch_assoc()['total'];
 $stmt->close();
 
 $conn->close();
+
+// Check for session messages
+$sessionMessage = $_SESSION['message'] ?? '';
+$sessionMessageType = $_SESSION['message_type'] ?? '';
+if ($sessionMessage) {
+    unset($_SESSION['message']);
+    unset($_SESSION['message_type']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -204,6 +212,13 @@ $conn->close();
     </style>
 </head>
 <body>
+    <?php 
+    include '../component/MessageDialog.php';
+    renderMessageDialogScript();
+    if ($sessionMessage) {
+        showMessageDialog($sessionMessageType ?: 'success', $sessionMessage, true, null, 4000);
+    }
+    ?>
     <!-- Navigation Bar -->
     <div class="nav-bar">
         <div class="nav-bar-content">

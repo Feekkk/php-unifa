@@ -10,7 +10,7 @@ if (isset($_COOKIE['remember_token'])) {
 session_unset();
 session_destroy();
 
-// Redirect to home page
-header('Location: ../index.php');
+// Redirect to home page with logout parameter
+header('Location: ../index.php?logged_out=1');
 exit();
 ?>

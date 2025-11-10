@@ -106,9 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
             $conn->close();
             
-            $success = 'Application submitted successfully!';
-            // Redirect after 2 seconds
-            header("refresh:2;url=StudentDashboard.php");
+            // Set success message in session and redirect
+            $_SESSION['message'] = 'Application submitted successfully! Your application is now pending review.';
+            $_SESSION['message_type'] = 'success';
+            header('Location: StudentDashboard.php');
+            exit();
         } else {
             $error = 'Failed to submit application. Please try again.';
         }
@@ -322,6 +324,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+    <?php 
+    include '../component/MessageDialog.php';
+    renderMessageDialogScript();
+    if ($error) {
+        showErrorMessage($error, true, null, 5000);
+    }
+    ?>
     <!-- Navigation Bar -->
     <div class="nav-bar">
         <div class="nav-bar-content">
@@ -350,17 +359,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Application Form -->
     <div class="application-form-container">
         <div class="form-content">
-            <?php if ($error): ?>
-                <div class="alert alert-error">
-                    <?php echo htmlspecialchars($error); ?>
-                </div>
-            <?php endif; ?>
-            <?php if ($success): ?>
-                <div class="alert alert-success">
-                    <?php echo htmlspecialchars($success); ?>
-                    <p style="margin: 8px 0 0; font-size: 0.875rem;">Redirecting to dashboard...</p>
-                </div>
-            <?php endif; ?>
 
             <form method="post" action="" enctype="multipart/form-data" id="applicationForm">
                 <!-- Application Details Section -->

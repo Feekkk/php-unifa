@@ -1,3 +1,9 @@
+<?php
+require_once 'config.php';
+
+// Check for logout message
+$showLogoutMessage = isset($_GET['logged_out']) && $_GET['logged_out'] == '1';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +17,15 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230a3d62'/><text x='50' y='58' font-size='56' text-anchor='middle' fill='white' font-family='Arial, sans-serif'>U</text></svg>">
 </head>
 <body>
+    <?php 
+    if ($showLogoutMessage) {
+        include 'pages/component/MessageDialog.php';
+        renderMessageDialogScript();
+        showSuccessMessage('You have been successfully logged out.', true, null, 3000);
+        // Clean URL
+        echo '<script>setTimeout(function() { window.history.replaceState({}, document.title, window.location.pathname); }, 100);</script>';
+    }
+    ?>
     <!-- Header -->
     <header class="site-header" role="banner">
         <div class="container header-inner">

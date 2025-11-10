@@ -51,6 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['student_id'] = $user['student_id'];
                 $_SESSION['user_role'] = $user['role'];
                 
+                // Set success message
+                $_SESSION['message'] = 'Welcome back, ' . htmlspecialchars($user['full_name']) . '! You have been successfully logged in.';
+                $_SESSION['message_type'] = 'success';
+                
                 // Handle "Remember Me" - set cookie for 30 days
                 if ($remember) {
                     $cookieValue = base64_encode($user['id'] . ':' . hash('sha256', $user['password']));
@@ -82,6 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->close();
     }
 }
+
+// Check for session messages (from logout, etc.)
+$sessionMessage = $_SESSION['message'] ?? '';
+$sessionMessageType = $_SESSION['message_type'] ?? '';
+if ($sessionMessage) {
+    unset($_SESSION['message']);
+    unset($_SESSION['message_type']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -95,6 +107,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
+    <?php 
+    include 'component/MessageDialog.php';
+    renderMessageDialogScript();
+    if ($error) {
+        showErrorMessage($error, true, null, 5000);
+    }
+    if ($sessionMessage) {
+        showMessageDialog($sessionMessageType ?: 'info', $sessionMessage, true, null, 4000);
+    }
+    ?>
     <main class="auth-page">
         <div class="auth-card-wrapper">
         <div class="auth-card">
@@ -106,11 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="small muted">Sign in to manage your financial aid applications</p>
             </div>
             <div class="auth-body">
-                <?php if ($error): ?>
-                    <div style="background-color: #fee; color: #c33; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fcc;">
-                        <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
                 <form method="post" action="">
                     <div class="form-row">
                         <label for="studentId">Student ID / Email</label>

@@ -2,7 +2,6 @@
 require_once '../config.php';
 
 $error = '';
-$success = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,6 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['student_id'] = $studentId;
                 $_SESSION['user_role'] = 'student';
                 
+                // Set success message
+                $_SESSION['message'] = 'Account created successfully! Welcome to RCMP UniFa, ' . htmlspecialchars($fullName) . '!';
+                $_SESSION['message_type'] = 'success';
+                
                 // Redirect to student dashboard
                 header('Location: student/StudentDashboard.php');
                 exit();
@@ -77,6 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
+    <?php 
+    include 'component/MessageDialog.php';
+    renderMessageDialogScript();
+    if ($error) {
+        showErrorMessage($error, true, null, 5000);
+    }
+    ?>
     <main class="auth-page">
         <div class="auth-card-wrapper">
         <div class="auth-card">
@@ -88,16 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="small muted">Register to apply for financial aid programs</p>
             </div>
             <div class="auth-body">
-                <?php if ($error): ?>
-                    <div style="background-color: #fee; color: #c33; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fcc;">
-                        <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
-                <?php if ($success): ?>
-                    <div style="background-color: #efe; color: #3c3; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfc;">
-                        <?php echo htmlspecialchars($success); ?>
-                    </div>
-                <?php endif; ?>
                 <form method="post" action="">
                     <div class="form-row">
                         <label for="fullName">Full Name</label>
