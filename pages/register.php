@@ -101,53 +101,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="auth-body">
                 <form method="post" action="">
-                    <div class="form-row">
-                        <label for="fullName">Full Name</label>
-                        <input class="input" type="text" id="fullName" name="fullName" placeholder="Your full name" required />
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label for="fullName">Full Name <span style="color: #dc2626;">*</span></label>
+                            <input class="input" type="text" id="fullName" name="fullName" placeholder="Your full name" required />
+                        </div>
+                        <div class="form-row">
+                            <label for="email">Email <span style="color: #dc2626;">*</span></label>
+                            <input class="input" type="email" id="email" name="email" placeholder="name@unikl.edu.my" required />
+                        </div>
+                        <div class="form-row">
+                            <label for="studentId">Student ID <span style="color: #dc2626;">*</span></label>
+                            <input class="input" type="text" id="studentId" name="studentId" placeholder="e.g. B12345" required />
+                        </div>
+                        <div class="form-row">
+                            <label for="phone">Phone</label>
+                            <input class="input" type="tel" id="phone" name="phone" placeholder="e.g. 012-3456789" />
+                        </div>
+                        <div class="form-row">
+                            <label for="course">Course</label>
+                            <input class="input" type="text" id="course" name="course" placeholder="e.g. Bachelor of Computer Science" />
+                        </div>
+                        <div class="form-row">
+                            <label for="semester">Semester</label>
+                            <input class="input" type="text" id="semester" name="semester" placeholder="e.g. Semester 1, Semester 2, Year 1" />
+                        </div>
+                        <div class="form-row">
+                            <label for="bankName">Bank Name</label>
+                            <input class="input" type="text" id="bankName" name="bankName" placeholder="e.g. Maybank, CIMB, Public Bank" />
+                        </div>
+                        <div class="form-row">
+                            <label for="bankNumber">Bank Account Number</label>
+                            <input class="input" type="text" id="bankNumber" name="bankNumber" placeholder="e.g. 1234567890" />
+                        </div>
+                        <div class="form-row">
+                            <label for="password">Password <span style="color: #dc2626;">*</span></label>
+                            <input class="input" type="password" id="password" name="password" placeholder="Create a password" required />
+                        </div>
+                        <div class="form-row">
+                            <label for="confirm">Confirm Password <span style="color: #dc2626;">*</span></label>
+                            <input class="input" type="password" id="confirm" name="confirm" placeholder="Confirm password" required />
+                        </div>
                     </div>
-                    <div class="form-row">
-                        <label for="email">Email</label>
-                        <input class="input" type="email" id="email" name="email" placeholder="name@unikl.edu.my" required />
-                    </div>
-                    <div class="form-row">
-                        <label for="studentId">Student ID</label>
-                        <input class="input" type="text" id="studentId" name="studentId" placeholder="e.g. B12345" required />
-                    </div>
-                    <div class="form-row">
-                        <label for="phone">Phone</label>
-                        <input class="input" type="tel" id="phone" name="phone" placeholder="e.g. 012-3456789" />
-                    </div>
-                    <div class="form-row">
-                        <label for="course">Course</label>
-                        <input class="input" type="text" id="course" name="course" placeholder="e.g. Bachelor of Computer Science" />
-                    </div>
-                    <div class="form-row">
-                        <label for="semester">Semester</label>
-                        <input class="input" type="text" id="semester" name="semester" placeholder="e.g. Semester 1, Semester 2, Year 1" />
-                    </div>
-                    <div class="form-row">
-                        <label for="bankName">Bank Name</label>
-                        <input class="input" type="text" id="bankName" name="bankName" placeholder="e.g. Maybank, CIMB, Public Bank" />
-                    </div>
-                    <div class="form-row">
-                        <label for="bankNumber">Bank Account Number</label>
-                        <input class="input" type="text" id="bankNumber" name="bankNumber" placeholder="e.g. 1234567890" />
-                    </div>
-                    <div class="form-row">
-                        <label for="password">Password</label>
-                        <input class="input" type="password" id="password" name="password" placeholder="Create a password" required />
-                    </div>
-                    <div class="form-row">
-                        <label for="confirm">Confirm Password</label>
-                        <input class="input" type="password" id="confirm" name="confirm" placeholder="Confirm password" required />
-                    </div>
-                    <div class="form-row" style="margin-top:14px;">
-                        <button type="submit" class="btn btn-primary" style="width:100%;">Create Account</button>
+                    <div class="form-row form-row-full" style="margin-top:32px;">
+                        <button type="submit" class="btn btn-primary" style="width:100%; padding: 14px; font-size: 1rem;">Create Account</button>
                     </div>
                 </form>
                 <div class="divider"></div>
-                <p class="text-center small">Already have an account? <a class="link" href="login.php">Login</a></p>
-                <p class="text-center small"><a class="link" href="../index.php">← Back to Home</a></p>
+                <div style="text-align: center;">
+                    <p class="small" style="margin: 0 0 8px;">Already have an account? <a class="link" href="login.php">Login</a></p>
+                    <p class="small" style="margin: 0;"><a class="link" href="../index.php">← Back to Home</a></p>
+                </div>
             </div>
         </div>
         </div>
