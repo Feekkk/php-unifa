@@ -152,85 +152,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-    }
-    
-    if (empty($error)) {
-        $conn = getDBConnection();
         
-        // Store additional data as JSON in application_data field
-        $applicationDataJson = json_encode(array_merge($additionalData, ['description' => $applicationData ?? '']));
-        
-        // Insert application
-        $stmt = $conn->prepare("INSERT INTO applications (user_id, category, subcategory, amount_applied, application_data, bank_name, bank_account_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')");
-        $stmt->bind_param("issdsss", $userId, $category, $subcategory, $amountApplied, $applicationDataJson, $bankName, $bankAccountNumber);
-        
-        if ($stmt->execute()) {
-            $applicationId = $conn->insert_id;
-            
-            // Handle file uploads - use relative path from current file location
-            $baseDir = dirname(dirname(__DIR__)); // Go up to project root
-            $uploadDir = $baseDir . '/storage/uploads/applications/' . $applicationId . '/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+        // Validate file uploads - all applications require documents
+        if (empty($error)) {
+            if (!isset($_FILES['documents']) || empty($_FILES['documents']['name'][0])) {
+                $error = 'Please upload at least one supporting document.';
             }
+        }
+        
+        if (empty($error)) {
+            $conn = getDBConnection();
             
-            $uploadedFiles = [];
-            if (isset($_FILES['documents']) && !empty($_FILES['documents']['name'][0])) {
-                $files = $_FILES['documents'];
-                $fileCount = count($files['name']);
+            // Store additional data as JSON in application_data field
+            $applicationDataJson = json_encode(array_merge($additionalData, ['description' => $applicationData ?? '']));
+            
+            // Insert application
+            $stmt = $conn->prepare("INSERT INTO applications (user_id, category, subcategory, amount_applied, application_data, bank_name, bank_account_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')");
+            $stmt->bind_param("issdsss", $userId, $category, $subcategory, $amountApplied, $applicationDataJson, $bankName, $bankAccountNumber);
+            
+            if ($stmt->execute()) {
+                $applicationId = $conn->insert_id;
                 
-                for ($i = 0; $i < $fileCount; $i++) {
-                    if ($files['error'][$i] === UPLOAD_ERR_OK) {
-                        $fileName = $files['name'][$i];
-                        $fileTmpName = $files['tmp_name'][$i];
-                        $fileSize = $files['size'][$i];
-                        $fileType = $files['type'][$i];
-                        
-                        // Validate file type
-                        $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
-                        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                        
-                        if (!in_array($fileExt, $allowedExtensions)) {
-                            continue; // Skip invalid file types
-                        }
-                        
-                        // Validate file size (10MB max)
-                        if ($fileSize > 10 * 1024 * 1024) {
-                            continue; // Skip files that are too large
-                        }
-                        
-                        // Generate unique filename
-                        $uniqueFileName = uniqid() . '_' . time() . '.' . $fileExt;
-                        $filePath = $uploadDir . $uniqueFileName;
-                        
-                        // Move uploaded file
-                        if (move_uploaded_file($fileTmpName, $filePath)) {
-                            // Get document type from form or derive from file
-                            $documentType = $_POST['document_types'][$i] ?? 'supporting_document';
+                // Handle file uploads - use relative path from current file location
+                $baseDir = dirname(dirname(__DIR__));
+                $uploadDir = $baseDir . '/storage/uploads/applications/' . $applicationId . '/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                
+                $uploadedFiles = [];
+                $validFilesUploaded = false;
+                if (isset($_FILES['documents']) && !empty($_FILES['documents']['name'][0])) {
+                    $files = $_FILES['documents'];
+                    $fileCount = count($files['name']);
+                    
+                    for ($i = 0; $i < $fileCount; $i++) {
+                        if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                            $fileName = $files['name'][$i];
+                            $fileTmpName = $files['tmp_name'][$i];
+                            $fileSize = $files['size'][$i];
+                            $fileType = $files['type'][$i];
                             
-                            // Save to database - use relative path from root
-                            $relativePath = 'storage/uploads/applications/' . $applicationId . '/' . $uniqueFileName;
-                            $docStmt = $conn->prepare("INSERT INTO application_documents (application_id, document_type, file_path, file_name, file_size, mime_type) VALUES (?, ?, ?, ?, ?, ?)");
-                            $docStmt->bind_param("isssis", $applicationId, $documentType, $relativePath, $fileName, $fileSize, $fileType);
-                            $docStmt->execute();
-                            $docStmt->close();
+                            // Validate file type
+                            $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+                            $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                             
-                            $uploadedFiles[] = $fileName;
+                            if (!in_array($fileExt, $allowedExtensions)) {
+                                continue; // Skip invalid file types
+                            }
+                            
+                            // Validate file size (10MB max)
+                            if ($fileSize > 10 * 1024 * 1024) {
+                                continue; // Skip files that are too large
+                            }
+                            
+                            // Generate unique filename
+                            $uniqueFileName = uniqid() . '_' . time() . '.' . $fileExt;
+                            $filePath = $uploadDir . $uniqueFileName;
+                            
+                            // Move uploaded file
+                            if (move_uploaded_file($fileTmpName, $filePath)) {
+                                // Determine document type based on category and subcategory
+                                $documentType = 'Supporting Document'; // Default
+                                
+                                if ($category === 'Bereavement (Khairat)') {
+                                    $documentType = 'Death Certificate';
+                                } elseif ($category === 'Illness & Injuries') {
+                                    if ($subcategory === 'Out-patient Treatment') {
+                                        $documentType = 'Receipt Clinic';
+                                    } elseif ($subcategory === 'In-patient Treatment') {
+                                        $documentType = 'Hospital Report';
+                                    } elseif ($subcategory === 'Injuries') {
+                                        $documentType = 'Hospital Report';
+                                    }
+                                } elseif ($category === 'Emergency') {
+                                    $documentType = 'Supporting Document';
+                                }
+                                
+                                // Save to database - use relative path from root
+                                $relativePath = 'storage/uploads/applications/' . $applicationId . '/' . $uniqueFileName;
+                                $docStmt = $conn->prepare("INSERT INTO application_documents (application_id, document_type, file_path, file_name, file_size, mime_type) VALUES (?, ?, ?, ?, ?, ?)");
+                                $docStmt->bind_param("isssis", $applicationId, $documentType, $relativePath, $fileName, $fileSize, $fileType);
+                                $docStmt->execute();
+                                $docStmt->close();
+                                
+                                $uploadedFiles[] = $fileName;
+                                $validFilesUploaded = true;
+                            }
                         }
                     }
                 }
+                
+                // Verify that at least one valid file was uploaded
+                if (!$validFilesUploaded) {
+                    // Delete the application record if no files were uploaded
+                    $deleteStmt = $conn->prepare("DELETE FROM applications WHERE id = ?");
+                    $deleteStmt->bind_param("i", $applicationId);
+                    $deleteStmt->execute();
+                    $deleteStmt->close();
+                    $stmt->close();
+                    $conn->close();
+                    $error = 'Please upload at least one valid supporting document (PDF, DOC, DOCX, JPG, or PNG, max 10MB per file).';
+                } else {
+                    $stmt->close();
+                    $conn->close();
+                    
+                    // Set success message in session and redirect
+                    $_SESSION['message'] = 'Application submitted successfully! Your application is now pending review.';
+                    $_SESSION['message_type'] = 'success';
+                    header('Location: StudentDashboard.php');
+                    exit();
+                }
+            } else {
+                $error = 'Failed to submit application. Please try again.';
+                $conn->close();
             }
-            
-            $stmt->close();
-            $conn->close();
-            
-            // Set success message in session and redirect
-            $_SESSION['message'] = 'Application submitted successfully! Your application is now pending review.';
-            $_SESSION['message_type'] = 'success';
-            header('Location: StudentDashboard.php');
-            exit();
-        } else {
-            $error = 'Failed to submit application. Please try again.';
         }
     }
 }
