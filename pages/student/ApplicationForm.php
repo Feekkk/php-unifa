@@ -43,37 +43,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ],
         'Illness & Injuries' => [
             'Out-patient Treatment' => ['fixed' => null, 'max' => 30],
-            'In-patient Treatment' => ['fixed' => null, 'max' => 1000],
+            'In-patient Treatment' => ['fixed' => null, 'max' => 10000],
             'Injuries' => ['fixed' => null, 'max' => 200]
         ],
         'Emergency' => [
             'Critical Illness' => ['fixed' => null, 'max' => 200],
             'Natural Disaster' => ['fixed' => null, 'max' => 200],
-            'Others' => ['fixed' => null, 'max' => null]
+            'Others' => ['fixed' => null, 'max' => 5000]
         ]
     ];
     
-    // Validation
-    if (empty($category) || empty($subcategory) || empty($amountApplied) || empty($applicationData)) {
-        $error = 'Please fill in all required fields.';
-    } elseif (!is_numeric($amountApplied) || $amountApplied <= 0) {
-        $error = 'Please enter a valid amount.';
+    // Collect additional form data based on category/subcategory
+    $additionalData = [];
+    
+    // Validate required fields based on category/subcategory
+    if (empty($category) || empty($subcategory)) {
+        $error = 'Please select both category and subcategory.';
     } elseif (!isset($categoryLimits[$category]) || !isset($categoryLimits[$category][$subcategory])) {
         $error = 'Invalid category or subcategory selected.';
     } else {
-        // Validate amount against limits
-        $limitInfo = $categoryLimits[$category][$subcategory];
-        
-        // Check if amount is fixed
-        if ($limitInfo['fixed'] !== null) {
-            // For fixed amounts, ensure the submitted amount matches
-            if (abs($amountApplied - $limitInfo['fixed']) > 0.01) {
-                $error = 'Invalid amount. This subcategory has a fixed amount of RM ' . number_format($limitInfo['fixed'], 2) . '.';
+        // Validate category-specific fields
+        if ($category === 'Bereavement (Khairat)') {
+            // Bereavement: Bank Name, Bank Account Number required, Amount is fixed
+            if (empty($bankName) || empty($bankAccountNumber)) {
+                $error = 'Bank Name and Bank Account Number are required for bereavement applications.';
             }
-        } else {
-            // For variable amounts, check maximum limit
-            if ($limitInfo['max'] !== null && $amountApplied > $limitInfo['max']) {
-                $error = 'Amount exceeds the maximum limit of RM ' . number_format($limitInfo['max'], 2) . ' for this subcategory.';
+            // Set fixed amount for bereavement
+            $limitInfo = $categoryLimits[$category][$subcategory];
+            if ($limitInfo['fixed'] !== null) {
+                $amountApplied = $limitInfo['fixed'];
+            }
+            $additionalData['bank_name'] = $bankName;
+            $additionalData['bank_account_number'] = $bankAccountNumber;
+        } elseif ($category === 'Illness & Injuries') {
+            if ($subcategory === 'Out-patient Treatment') {
+                // Out-patient: Clinic Name, Reason Visit, Visit Date, Amount, Bank details
+                $clinicName = trim($_POST['clinic_name'] ?? '');
+                $reasonVisit = trim($_POST['reason_visit'] ?? '');
+                $visitDate = trim($_POST['visit_date'] ?? '');
+                
+                if (empty($clinicName) || empty($reasonVisit) || empty($visitDate) || empty($amountApplied) || empty($bankName) || empty($bankAccountNumber)) {
+                    $error = 'Please fill in all required fields for out-patient treatment.';
+                }
+                $additionalData['clinic_name'] = $clinicName;
+                $additionalData['reason_visit'] = $reasonVisit;
+                $additionalData['visit_date'] = $visitDate;
+                $additionalData['bank_name'] = $bankName;
+                $additionalData['bank_account_number'] = $bankAccountNumber;
+            } elseif ($subcategory === 'In-patient Treatment') {
+                // In-patient: Reason Visit, Check in Date, Check out Date, Amount, Bank details
+                $reasonVisit = trim($_POST['reason_visit'] ?? '');
+                $checkInDate = trim($_POST['check_in_date'] ?? '');
+                $checkOutDate = trim($_POST['check_out_date'] ?? '');
+                
+                if (empty($reasonVisit) || empty($checkInDate) || empty($checkOutDate) || empty($amountApplied) || empty($bankName) || empty($bankAccountNumber)) {
+                    $error = 'Please fill in all required fields for in-patient treatment.';
+                }
+                $additionalData['reason_visit'] = $reasonVisit;
+                $additionalData['check_in_date'] = $checkInDate;
+                $additionalData['check_out_date'] = $checkOutDate;
+                $additionalData['bank_name'] = $bankName;
+                $additionalData['bank_account_number'] = $bankAccountNumber;
+            } elseif ($subcategory === 'Injuries') {
+                // Injuries: Amount, Bank details
+                if (empty($amountApplied) || empty($bankName) || empty($bankAccountNumber)) {
+                    $error = 'Please fill in all required fields for injuries.';
+                }
+                $additionalData['bank_name'] = $bankName;
+                $additionalData['bank_account_number'] = $bankAccountNumber;
+            }
+        } elseif ($category === 'Emergency') {
+            if ($subcategory === 'Critical Illness') {
+                // Critical Illness: Amount, Bank details
+                if (empty($amountApplied) || empty($bankName) || empty($bankAccountNumber)) {
+                    $error = 'Please fill in all required fields for critical illness.';
+                }
+                $additionalData['bank_name'] = $bankName;
+                $additionalData['bank_account_number'] = $bankAccountNumber;
+            } elseif ($subcategory === 'Natural Disaster' || $subcategory === 'Others') {
+                // Natural Disaster & Others: Case, Amount, Bank details
+                $caseDescription = trim($_POST['case_description'] ?? '');
+                if (empty($caseDescription) || empty($amountApplied) || empty($bankName) || empty($bankAccountNumber)) {
+                    $error = 'Please fill in all required fields.';
+                }
+                $additionalData['case_description'] = $caseDescription;
+                $additionalData['bank_name'] = $bankName;
+                $additionalData['bank_account_number'] = $bankAccountNumber;
+            }
+        }
+        
+        // Validate amount (skip for fixed amounts like Bereavement)
+        if (empty($error)) {
+            $limitInfo = $categoryLimits[$category][$subcategory];
+            
+            // Check if amount is fixed
+            if ($limitInfo['fixed'] !== null) {
+                // For fixed amounts, use the fixed value
+                $amountApplied = $limitInfo['fixed'];
+            } else {
+                // For variable amounts, validate the input
+                if (empty($amountApplied) || !is_numeric($amountApplied) || $amountApplied <= 0) {
+                    $error = 'Please enter a valid amount.';
+                } else {
+                    // Check maximum limit
+                    if ($limitInfo['max'] !== null && $amountApplied > $limitInfo['max']) {
+                        $error = 'Amount exceeds the maximum limit of RM ' . number_format($limitInfo['max'], 2) . ' for this subcategory.';
+                    }
+                }
             }
         }
     }
@@ -81,9 +157,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($error)) {
         $conn = getDBConnection();
         
+        // Store additional data as JSON in application_data field
+        $applicationDataJson = json_encode(array_merge($additionalData, ['description' => $applicationData ?? '']));
+        
         // Insert application
         $stmt = $conn->prepare("INSERT INTO applications (user_id, category, subcategory, amount_applied, application_data, bank_name, bank_account_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')");
-        $stmt->bind_param("issdsss", $userId, $category, $subcategory, $amountApplied, $applicationData, $bankName, $bankAccountNumber);
+        $stmt->bind_param("issdsss", $userId, $category, $subcategory, $amountApplied, $applicationDataJson, $bankName, $bankAccountNumber);
         
         if ($stmt->execute()) {
             $applicationId = $conn->insert_id;
@@ -369,6 +448,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-color: #d1d5db;
             box-shadow: none;
         }
+        .form-group input[type="date"],
+        .form-group input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+            color: var(--text);
+            outline: none;
+            transition: border-color .2s ease, box-shadow .2s ease;
+            font-family: inherit;
+        }
+        .form-group input[type="date"]:focus,
+        .form-group input[type="datetime-local"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(10,61,98,0.12);
+        }
+        .dynamic-field {
+            display: none;
+        }
+        .dynamic-field.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -432,44 +534,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="help-text" id="subcategoryHelp">Please select a category first to see available subcategories</div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="amount_applied">Amount Applied (RM) <span class="required">*</span></label>
-                        <input type="number" id="amount_applied" name="amount_applied" step="0.01" min="0" placeholder="0.00" required />
+                    <!-- Dynamic fields will appear here based on category/subcategory -->
+                    <div id="dynamicFields"></div>
+
+                    <!-- Amount Applied (shown for non-fixed amounts or always visible) -->
+                    <div class="form-group" id="amountGroup" style="display: none;">
+                        <label for="amount_applied">Total Amount Applied (RM) <span class="required">*</span></label>
+                        <input type="number" id="amount_applied" name="amount_applied" step="0.01" min="0" placeholder="0.00" />
                         <div class="help-text" id="amountHelp">Enter the amount you are requesting in Malaysian Ringgit</div>
                     </div>
+                    <!-- Hidden amount field for fixed amounts (always submitted) -->
+                    <input type="hidden" id="amount_applied_hidden" value="" />
 
-                    <div class="form-group">
-                        <label for="application_data">Application Description <span class="required">*</span></label>
-                        <textarea id="application_data" name="application_data" placeholder="Please provide detailed information about your financial need, circumstances, and how this assistance will help you..." required></textarea>
-                        <div class="help-text">Explain your situation and why you need financial assistance</div>
-                    </div>
-                </div>
-
-                <!-- Bank Details Section -->
-                <div class="form-section">
-                    <h2>Bank Account Details</h2>
-                    <p style="color: var(--muted); margin-bottom: 24px;">Provide your bank account details for fund transfer if your application is approved</p>
-                    
-                    <div class="form-group">
-                        <label for="bank_name">Bank Name</label>
+                    <!-- Bank Details (shown for all categories) -->
+                    <div class="form-group" id="bankNameGroup">
+                        <label for="bank_name">Bank Name <span class="required">*</span></label>
                         <input type="text" id="bank_name" name="bank_name" value="<?php echo htmlspecialchars($userBankName); ?>" placeholder="e.g. Maybank, CIMB, Public Bank" />
                         <div class="help-text">Your bank account will be used for fund transfer if approved</div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="bank_account_number">Bank Account Number</label>
+                    <div class="form-group" id="bankAccountGroup">
+                        <label for="bank_account_number">Bank Account Number <span class="required">*</span></label>
                         <input type="text" id="bank_account_number" name="bank_account_number" value="<?php echo htmlspecialchars($userBankNumber); ?>" placeholder="e.g. 1234567890" />
                         <div class="help-text">Your bank account number for fund transfer</div>
                     </div>
-                </div>
 
-                <!-- Supporting Documents Section -->
-                <div class="form-section">
-                    <h2>Supporting Documents</h2>
-                    <p style="color: var(--muted); margin-bottom: 24px;">Upload relevant documents to support your application (e.g. medical reports, receipts, bank statements, etc.)</p>
-                    
+                    <!-- Supporting Documents Section -->
                     <div class="form-group">
-                        <label for="documents">Upload Documents</label>
+                        <label for="documents">Upload Documents <span class="required">*</span></label>
+                        <div id="documentDescription" class="help-text" style="margin-bottom: 12px; font-weight: 500;">Select a category and subcategory to see required documents</div>
                         <div class="file-upload-area" id="fileUploadArea">
                             <input type="file" id="documents" name="documents[]" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display: none;" />
                             <p style="margin: 0; color: var(--muted);">
@@ -588,13 +681,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ],
             'Illness & Injuries': [
                 { value: 'Out-patient Treatment', label: 'Out-patient Treatment (RM 30/semester, 2 claims/year)' },
-                { value: 'In-patient Treatment', label: 'In-patient Treatment (Up to RM 1,000)' },
+                { value: 'In-patient Treatment', label: 'In-patient Treatment (Up to RM 10,000)' },
                 { value: 'Injuries', label: 'Injuries (Up to RM 200 for support equipment)' }
             ],
             'Emergency': [
                 { value: 'Critical Illness', label: 'Critical Illness (Up to RM 200)' },
                 { value: 'Natural Disaster', label: 'Natural Disaster (RM 200 limit)' },
-                { value: 'Others', label: 'Others (Subject to SWF Campus committee approval)' }
+                { value: 'Others', label: 'Others (Up to RM 5,000, subject to approval)' }
             ]
         };
 
@@ -606,13 +699,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             },
             'Illness & Injuries': {
                 'Out-patient Treatment': { fixed: null, max: 30 },
-                'In-patient Treatment': { fixed: null, max: 1000 },
+                'In-patient Treatment': { fixed: null, max: 10000 },
                 'Injuries': { fixed: null, max: 200 }
             },
             'Emergency': {
                 'Critical Illness': { fixed: null, max: 200 },
                 'Natural Disaster': { fixed: null, max: 200 },
-                'Others': { fixed: null, max: null } // Subject to approval
+                'Others': { fixed: null, max: 5000 }
+            }
+        };
+
+        // Field configurations for each category/subcategory
+        const fieldConfigs = {
+            'Bereavement (Khairat)': {
+                'Student': { fields: ['bank_name', 'bank_account_number'], documentType: 'Death Certificate' },
+                'Parent': { fields: ['bank_name', 'bank_account_number'], documentType: 'Death Certificate' },
+                'Sibling': { fields: ['bank_name', 'bank_account_number'], documentType: 'Death Certificate' }
+            },
+            'Illness & Injuries': {
+                'Out-patient Treatment': { 
+                    fields: ['clinic_name', 'reason_visit', 'visit_date', 'amount_applied', 'bank_name', 'bank_account_number'],
+                    documentType: 'Receipt Clinic'
+                },
+                'In-patient Treatment': { 
+                    fields: ['reason_visit', 'check_in_date', 'check_out_date', 'amount_applied', 'bank_name', 'bank_account_number'],
+                    documentType: 'Report, Discharge Note, Hospital Bill'
+                },
+                'Injuries': { 
+                    fields: ['amount_applied', 'bank_name', 'bank_account_number'],
+                    documentType: 'Hospital Report, Receipt of purchased'
+                }
+            },
+            'Emergency': {
+                'Critical Illness': { 
+                    fields: ['amount_applied', 'bank_name', 'bank_account_number'],
+                    documentType: 'Supporting Document'
+                },
+                'Natural Disaster': { 
+                    fields: ['case_description', 'amount_applied', 'bank_name', 'bank_account_number'],
+                    documentType: 'Supporting Document (Police Report, Photo of incident)'
+                },
+                'Others': { 
+                    fields: ['case_description', 'amount_applied', 'bank_name', 'bank_account_number'],
+                    documentType: 'Supporting Document (Police Report, Photo of incident)'
+                }
             }
         };
 
@@ -646,6 +776,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 subcategorySelect.disabled = true;
                 subcategorySelect.required = false;
                 subcategoryHelp.textContent = 'Please select a category first to see available subcategories';
+                // Hide all dynamic fields
+                updateDynamicFields('', '');
             }
             
             // Reset amount field
@@ -653,11 +785,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             updateAmountField();
         }
 
+        function updateDynamicFields(category, subcategory) {
+            const dynamicFieldsContainer = document.getElementById('dynamicFields');
+            const documentDescription = document.getElementById('documentDescription');
+            const amountGroup = document.getElementById('amountGroup');
+            const bankNameGroup = document.getElementById('bankNameGroup');
+            const bankAccountGroup = document.getElementById('bankAccountGroup');
+            
+            // Clear existing dynamic fields
+            dynamicFieldsContainer.innerHTML = '';
+            
+            if (!category || !subcategory || !fieldConfigs[category] || !fieldConfigs[category][subcategory]) {
+                // Hide all fields initially
+                amountGroup.style.display = 'none';
+                bankNameGroup.style.display = 'none';
+                bankAccountGroup.style.display = 'none';
+                documentDescription.textContent = 'Select a category and subcategory to see required documents';
+                return;
+            }
+            
+            const config = fieldConfigs[category][subcategory];
+            
+            // Amount field visibility is handled in updateAmountField()
+            
+            if (config.fields.includes('bank_name')) {
+                bankNameGroup.style.display = 'block';
+            } else {
+                bankNameGroup.style.display = 'none';
+            }
+            
+            if (config.fields.includes('bank_account_number')) {
+                bankAccountGroup.style.display = 'block';
+            } else {
+                bankAccountGroup.style.display = 'none';
+            }
+            
+            // Create dynamic fields
+            if (config.fields.includes('clinic_name')) {
+                const field = createTextField('clinic_name', 'Clinic Name', 'Enter the name of the clinic', true);
+                dynamicFieldsContainer.appendChild(field);
+            }
+            
+            if (config.fields.includes('reason_visit')) {
+                const field = createTextField('reason_visit', 'Reason Visit', 'Enter the reason for your visit', true);
+                dynamicFieldsContainer.appendChild(field);
+            }
+            
+            if (config.fields.includes('visit_date')) {
+                const field = createDateTimeField('visit_date', 'Date & Time Visit', true);
+                dynamicFieldsContainer.appendChild(field);
+            }
+            
+            if (config.fields.includes('check_in_date')) {
+                const field = createDateField('check_in_date', 'Check in Date', true);
+                dynamicFieldsContainer.appendChild(field);
+            }
+            
+            if (config.fields.includes('check_out_date')) {
+                const field = createDateField('check_out_date', 'Check out Date', true);
+                dynamicFieldsContainer.appendChild(field);
+            }
+            
+            if (config.fields.includes('case_description')) {
+                const field = createTextareaField('case_description', 'Case', 'Describe the case or incident', true);
+                dynamicFieldsContainer.appendChild(field);
+            }
+            
+            // Update document description
+            documentDescription.textContent = 'Required documents: ' + config.documentType;
+            documentDescription.style.color = 'var(--primary)';
+            documentDescription.style.fontWeight = '600';
+            
+            // Update amount field after dynamic fields are set up
+            updateAmountField();
+        }
+
+        function createTextField(name, label, placeholder, required) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.innerHTML = `
+                <label for="${name}">${label} ${required ? '<span class="required">*</span>' : ''}</label>
+                <input type="text" id="${name}" name="${name}" placeholder="${placeholder}" ${required ? 'required' : ''} />
+                <div class="help-text">${placeholder}</div>
+            `;
+            return group;
+        }
+
+        function createTextareaField(name, label, placeholder, required) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.innerHTML = `
+                <label for="${name}">${label} ${required ? '<span class="required">*</span>' : ''}</label>
+                <textarea id="${name}" name="${name}" placeholder="${placeholder}" ${required ? 'required' : ''}></textarea>
+                <div class="help-text">${placeholder}</div>
+            `;
+            return group;
+        }
+
+        function createDateField(name, label, required) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.innerHTML = `
+                <label for="${name}">${label} ${required ? '<span class="required">*</span>' : ''}</label>
+                <input type="date" id="${name}" name="${name}" ${required ? 'required' : ''} />
+                <div class="help-text">Select the ${label.toLowerCase()}</div>
+            `;
+            return group;
+        }
+
+        function createDateTimeField(name, label, required) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.innerHTML = `
+                <label for="${name}">${label} ${required ? '<span class="required">*</span>' : ''}</label>
+                <input type="datetime-local" id="${name}" name="${name}" ${required ? 'required' : ''} />
+                <div class="help-text">Select the date and time of your visit</div>
+            `;
+            return group;
+        }
+
         function updateAmountField() {
             const categorySelect = document.getElementById('category');
             const subcategorySelect = document.getElementById('subcategory');
             const amountInput = document.getElementById('amount_applied');
-            const amountHelp = amountInput.nextElementSibling;
+            const amountGroup = document.getElementById('amountGroup');
+            const amountHelp = amountInput ? amountInput.nextElementSibling : null;
             
             const category = categorySelect.value;
             const subcategory = subcategorySelect.value;
@@ -667,52 +919,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Check if amount is fixed
                 if (limitInfo.fixed !== null) {
-                    // Fixed amount - auto-fill and disable
-                    amountInput.value = limitInfo.fixed;
-                    amountInput.readOnly = true;
-                    amountInput.style.backgroundColor = '#f3f4f6';
-                    amountInput.style.cursor = 'not-allowed';
-                    amountInput.setAttribute('data-max-amount', limitInfo.fixed);
-                    if (amountHelp) {
-                        amountHelp.textContent = 'This is a fixed amount for this subcategory (RM ' + limitInfo.fixed.toFixed(2) + ').';
-                        amountHelp.style.color = 'var(--primary)';
+                    // Fixed amount - set value in hidden field
+                    const hiddenAmountInput = document.getElementById('amount_applied_hidden');
+                    if (hiddenAmountInput) {
+                        hiddenAmountInput.value = limitInfo.fixed;
+                    }
+                    // Hide visible amount field
+                    if (amountGroup) {
+                        amountGroup.style.display = 'none';
                     }
                 } else {
-                    // Variable amount
-                    amountInput.readOnly = false;
-                    amountInput.style.backgroundColor = '#fff';
-                    amountInput.style.cursor = 'text';
-                    
-                    if (limitInfo.max !== null) {
-                        amountInput.max = limitInfo.max;
-                        amountInput.placeholder = 'Maximum: RM ' + limitInfo.max.toFixed(2);
-                        amountInput.setAttribute('data-max-amount', limitInfo.max);
-                        if (amountHelp) {
-                            amountHelp.textContent = 'Enter the amount you are requesting (maximum RM ' + limitInfo.max.toFixed(2) + ').';
-                            amountHelp.style.color = 'var(--muted)';
-                        }
-                    } else {
-                        amountInput.removeAttribute('max');
-                        amountInput.placeholder = 'Amount (subject to SWF Campus committee approval)';
-                        amountInput.removeAttribute('data-max-amount');
-                        if (amountHelp) {
-                            amountHelp.textContent = 'Enter the amount you are requesting. This amount is subject to SWF Campus committee approval.';
-                            amountHelp.style.color = 'var(--muted)';
+                    // Variable amount - show and enable input
+                    // Remove hidden field value
+                    const hiddenAmountInput = document.getElementById('amount_applied_hidden');
+                    if (hiddenAmountInput) {
+                        hiddenAmountInput.value = '';
+                        hiddenAmountInput.removeAttribute('name'); // Remove name so it doesn't submit
+                    }
+                    // Show visible amount field
+                    if (amountGroup) {
+                        amountGroup.style.display = 'block';
+                    }
+                    if (amountInput) {
+                        amountInput.required = true;
+                        amountInput.readOnly = false;
+                        amountInput.style.backgroundColor = '#fff';
+                        amountInput.style.cursor = 'text';
+                        
+                        if (limitInfo.max !== null) {
+                            amountInput.max = limitInfo.max;
+                            amountInput.placeholder = 'Maximum: RM ' + limitInfo.max.toFixed(2);
+                            amountInput.setAttribute('data-max-amount', limitInfo.max);
+                            if (amountHelp) {
+                                amountHelp.textContent = 'Enter the amount you are requesting (maximum RM ' + limitInfo.max.toFixed(2) + ').';
+                                amountHelp.style.color = 'var(--muted)';
+                            }
+                        } else {
+                            amountInput.removeAttribute('max');
+                            amountInput.placeholder = 'Amount (subject to SWF Campus committee approval)';
+                            amountInput.removeAttribute('data-max-amount');
+                            if (amountHelp) {
+                                amountHelp.textContent = 'Enter the amount you are requesting. This amount is subject to SWF Campus committee approval.';
+                                amountHelp.style.color = 'var(--muted)';
+                            }
                         }
                     }
                 }
             } else {
                 // Reset to default
-                amountInput.value = '';
-                amountInput.readOnly = false;
-                amountInput.style.backgroundColor = '#fff';
-                amountInput.style.cursor = 'text';
-                amountInput.removeAttribute('max');
-                amountInput.placeholder = '0.00';
-                amountInput.removeAttribute('data-max-amount');
-                if (amountHelp) {
-                    amountHelp.textContent = 'Enter the amount you are requesting in Malaysian Ringgit';
-                    amountHelp.style.color = 'var(--muted)';
+                if (amountInput) {
+                    amountInput.value = '';
+                    amountInput.readOnly = false;
+                    amountInput.style.backgroundColor = '#fff';
+                    amountInput.style.cursor = 'text';
+                    amountInput.removeAttribute('max');
+                    amountInput.placeholder = '0.00';
+                    amountInput.removeAttribute('data-max-amount');
+                    amountInput.removeAttribute('required');
+                    if (amountHelp) {
+                        amountHelp.textContent = 'Enter the amount you are requesting in Malaysian Ringgit';
+                        amountHelp.style.color = 'var(--muted)';
+                    }
                 }
             }
         }
@@ -727,11 +994,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Reset subcategory when category changes
                     subcategorySelect.value = '';
                     updateSubcategories();
+                    updateDynamicFields('', '');
                 });
             }
             
             if (subcategorySelect) {
-                subcategorySelect.addEventListener('change', updateAmountField);
+                subcategorySelect.addEventListener('change', function() {
+                    const category = categorySelect.value;
+                    const subcategory = subcategorySelect.value;
+                    updateDynamicFields(category, subcategory);
+                    // updateAmountField is called at the end of updateDynamicFields
+                });
             }
             
             // Validate amount on input
@@ -756,12 +1029,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             subcategorySelect.disabled = false;
                         }
                         
-                        const maxAmount = amountInput.getAttribute('data-max-amount');
-                        if (maxAmount && parseFloat(amountInput.value) > parseFloat(maxAmount)) {
-                            e.preventDefault();
-                            amountInput.setCustomValidity('Amount exceeds the maximum limit of RM ' + parseFloat(maxAmount).toFixed(2));
-                            amountInput.reportValidity();
-                            return false;
+                        // Ensure fixed amounts are set for Bereavement and validate
+                        const categorySelect = document.getElementById('category');
+                        const category = categorySelect ? categorySelect.value : '';
+                        const subcategory = subcategorySelect ? subcategorySelect.value : '';
+                        
+                        if (category && subcategory && categoryLimits[category] && categoryLimits[category][subcategory]) {
+                            const limitInfo = categoryLimits[category][subcategory];
+                            if (limitInfo.fixed !== null) {
+                                // Fixed amount - ensure hidden field has value
+                                const hiddenAmountInput = document.getElementById('amount_applied_hidden');
+                                if (hiddenAmountInput) {
+                                    hiddenAmountInput.value = limitInfo.fixed;
+                                    hiddenAmountInput.setAttribute('name', 'amount_applied');
+                                }
+                                // Remove name from visible input if it exists
+                                if (amountInput) {
+                                    amountInput.removeAttribute('name');
+                                }
+                            } else {
+                                // Variable amount - use visible input, remove hidden input name
+                                const hiddenAmountInput = document.getElementById('amount_applied_hidden');
+                                if (hiddenAmountInput) {
+                                    hiddenAmountInput.removeAttribute('name');
+                                }
+                                if (amountInput) {
+                                    amountInput.setAttribute('name', 'amount_applied');
+                                    // Validate amount limits
+                                    const maxAmount = amountInput.getAttribute('data-max-amount');
+                                    if (maxAmount && parseFloat(amountInput.value) > parseFloat(maxAmount)) {
+                                        e.preventDefault();
+                                        amountInput.setCustomValidity('Amount exceeds the maximum limit of RM ' + parseFloat(maxAmount).toFixed(2));
+                                        amountInput.reportValidity();
+                                        return false;
+                                    }
+                                }
+                            }
                         }
                     });
                 }
