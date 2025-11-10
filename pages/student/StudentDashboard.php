@@ -294,7 +294,7 @@ if ($sessionMessage) {
                     <div class="action-card">
                         <h3>View Applications</h3>
                         <p>Track your application status</p>
-                        <a href="#" class="btn btn-outline">View All</a>
+                        <a href="ViewApplication.php" class="btn btn-outline">View All</a>
                     </div>
                     <div class="action-card">
                         <h3>Update Profile</h3>
