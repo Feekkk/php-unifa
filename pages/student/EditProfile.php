@@ -15,7 +15,7 @@ $success = '';
 
 // Get current user data from database
 $conn = getDBConnection();
-$stmt = $conn->prepare("SELECT full_name, email, phone, bank_name, bank_number FROM users WHERE id = ?");
+$stmt = $conn->prepare("SELECT full_name, email, phone, course, semester, bank_name, bank_number FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -25,6 +25,8 @@ $stmt->close();
 $currentFullName = $userData['full_name'] ?? '';
 $currentEmail = $userData['email'] ?? '';
 $currentPhone = $userData['phone'] ?? '';
+$currentCourse = $userData['course'] ?? '';
+$currentSemester = $userData['semester'] ?? '';
 $currentBankName = $userData['bank_name'] ?? '';
 $currentBankNumber = $userData['bank_number'] ?? '';
 
@@ -33,6 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullName = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $course = trim($_POST['course'] ?? '');
+    $semester = trim($_POST['semester'] ?? '');
     $bankName = trim($_POST['bank_name'] ?? '');
     $bankNumber = trim($_POST['bank_number'] ?? '');
     $currentPassword = trim($_POST['current_password'] ?? '');
@@ -88,11 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update password if provided, otherwise just update other fields
         if (!empty($newPassword)) {
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, bank_name = ?, bank_number = ?, password = ? WHERE id = ?");
-            $stmt->bind_param("ssssssi", $fullName, $email, $phone, $bankName, $bankNumber, $hashedPassword, $userId);
+            $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, course = ?, semester = ?, bank_name = ?, bank_number = ?, password = ? WHERE id = ?");
+            $stmt->bind_param("ssssssssi", $fullName, $email, $phone, $course, $semester, $bankName, $bankNumber, $hashedPassword, $userId);
         } else {
-            $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, bank_name = ?, bank_number = ? WHERE id = ?");
-            $stmt->bind_param("sssssi", $fullName, $email, $phone, $bankName, $bankNumber, $userId);
+            $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, course = ?, semester = ?, bank_name = ?, bank_number = ? WHERE id = ?");
+            $stmt->bind_param("sssssssi", $fullName, $email, $phone, $course, $semester, $bankName, $bankNumber, $userId);
         }
         
         if ($stmt->execute()) {
@@ -120,6 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $currentFullName = $fullName;
     $currentEmail = $email;
     $currentPhone = $phone;
+    $currentCourse = $course;
+    $currentSemester = $semester;
     $currentBankName = $bankName;
     $currentBankNumber = $bankNumber;
 }
@@ -357,6 +363,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="phone">Phone Number</label>
                         <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($currentPhone); ?>" placeholder="e.g. 0123456789" />
                         <div class="help-text">Your contact phone number (optional)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="course">Course</label>
+                        <input type="text" id="course" name="course" value="<?php echo htmlspecialchars($currentCourse); ?>" placeholder="e.g. Bachelor of Computer Science" />
+                        <div class="help-text">Your course of study (optional)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="semester">Semester</label>
+                        <input type="text" id="semester" name="semester" value="<?php echo htmlspecialchars($currentSemester); ?>" placeholder="e.g. Semester 1, Semester 2, Year 1" />
+                        <div class="help-text">Your current semester (optional)</div>
                     </div>
                 </div>
 

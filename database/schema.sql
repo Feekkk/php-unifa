@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     student_id VARCHAR(50) NOT NULL UNIQUE,
     phone VARCHAR(20),
+    course VARCHAR(100),
+    semester VARCHAR(50),
     bank_name VARCHAR(100),
     bank_number VARCHAR(50),
     password VARCHAR(255) NOT NULL,

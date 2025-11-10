@@ -9,6 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $studentId = trim($_POST['studentId'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $course = trim($_POST['course'] ?? '');
+    $semester = trim($_POST['semester'] ?? '');
     $bankName = trim($_POST['bankName'] ?? '');
     $bankNumber = trim($_POST['bankNumber'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -38,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             
             // Insert user
-            $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, phone, bank_name, bank_number, password, role) VALUES (?, ?, ?, ?, ?, ?, ?, 'student')");
-            $stmt->bind_param("sssssss", $fullName, $email, $studentId, $phone, $bankName, $bankNumber, $hashedPassword);
+            $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, phone, course, semester, bank_name, bank_number, password, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'student')");
+            $stmt->bind_param("sssssssss", $fullName, $email, $studentId, $phone, $course, $semester, $bankName, $bankNumber, $hashedPassword);
             
             if ($stmt->execute()) {
                 // Get the newly created user
@@ -114,6 +116,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-row">
                         <label for="phone">Phone</label>
                         <input class="input" type="tel" id="phone" name="phone" placeholder="e.g. 012-3456789" />
+                    </div>
+                    <div class="form-row">
+                        <label for="course">Course</label>
+                        <input class="input" type="text" id="course" name="course" placeholder="e.g. Bachelor of Computer Science" />
+                    </div>
+                    <div class="form-row">
+                        <label for="semester">Semester</label>
+                        <input class="input" type="text" id="semester" name="semester" placeholder="e.g. Semester 1, Semester 2, Year 1" />
                     </div>
                     <div class="form-row">
                         <label for="bankName">Bank Name</label>
