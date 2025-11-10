@@ -155,43 +155,96 @@ $showLogoutMessage = isset($_GET['logged_out']) && $_GET['logged_out'] == '1';
         <section id="applications" class="section applications" aria-labelledby="apps-title">
             <div class="container">
                 <h2 id="apps-title">Available Financial Aid Programs</h2>
-                <div class="card-grid app-grid">
-                    <article class="app-card">
-                        <div class="icon" aria-hidden="true">🆘</div>
-                        <h3>Emergency Financial Assistance</h3>
-                        <p>Rapid support for urgent needs affecting study continuity.</p>
-                        <a href="#" class="btn btn-ghost">Learn More</a>
-                    </article>
-                    <article class="app-card">
-                        <div class="icon" aria-hidden="true">🎓</div>
-                        <h3>Tuition Fee Support</h3>
-                        <p>Assistance to bridge gaps in tuition payment obligations.</p>
-                        <a href="#" class="btn btn-ghost">Learn More</a>
-                    </article>
-                    <article class="app-card">
-                        <div class="icon" aria-hidden="true">📚</div>
-                        <h3>Book & Study Material Grants</h3>
-                        <p>Grants for books, lab fees, and essential learning materials.</p>
-                        <a href="#" class="btn btn-ghost">Learn More</a>
-                    </article>
-                    <article class="app-card">
-                        <div class="icon" aria-hidden="true">🏠</div>
-                        <h3>Living Allowance Support</h3>
-                        <p>Monthly stipends to ease the burden of living costs.</p>
-                        <a href="#" class="btn btn-ghost">Learn More</a>
-                    </article>
-                    <article class="app-card">
-                        <div class="icon" aria-hidden="true">🔬</div>
-                        <h3>Project/Research Funding</h3>
-                        <p>Funding for impactful student projects and research work.</p>
-                        <a href="#" class="btn btn-ghost">Learn More</a>
-                    </article>
-                    <article class="app-card">
-                        <div class="icon" aria-hidden="true">💻</div>
-                        <h3>Technology & Equipment Aid</h3>
-                        <p>Support for laptops, devices, and specialized equipment.</p>
-                        <a href="#" class="btn btn-ghost">Learn More</a>
-                    </article>
+                
+                <!-- Bereavement (Khairat) -->
+                <div class="program-category" style="margin-bottom: 48px;">
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 2rem;">💐</span>
+                        Bereavement (Khairat)
+                    </h3>
+                    <div class="card-grid app-grid">
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">👤</div>
+                            <h3>Student</h3>
+                            <p><strong>RM 500 fixed</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Financial assistance for student bereavement cases.</p>
+                        </article>
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">👨‍👩‍👧</div>
+                            <h3>Parent</h3>
+                            <p><strong>RM 200 fixed</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Support for students who have lost a parent.</p>
+                        </article>
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">👫</div>
+                            <h3>Sibling</h3>
+                            <p><strong>RM 100 fixed</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Assistance for students who have lost a sibling.</p>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Illness & Injuries -->
+                <div class="program-category" style="margin-bottom: 48px;">
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 2rem;">🏥</span>
+                        Illness & Injuries
+                    </h3>
+                    <div class="card-grid app-grid">
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">🩺</div>
+                            <h3>Out-patient Treatment</h3>
+                            <p><strong>RM 30 / semester</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Limited to RM 30 per semester. Allowable for two claims per year.</p>
+                        </article>
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">🏨</div>
+                            <h3>In-patient Treatment</h3>
+                            <p><strong>Up to RM 1,000</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Applicable only if hospitalization cost exceeded the stipulated insurance coverage (overall annual limit per annum per student RM20,000.00). Limit up to RM 1,000.00. Provision of fund more than RM 1,000.00 requires SWF Campus committee approval.</p>
+                        </article>
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">🦽</div>
+                            <h3>Injuries</h3>
+                            <p><strong>Up to RM 200</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Coverage limited to injury support equipment up to RM 200.00.</p>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Emergency -->
+                <div class="program-category" style="margin-bottom: 48px;">
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 2rem;">🚨</span>
+                        Emergency
+                    </h3>
+                    <div class="card-grid app-grid">
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">⚠️</div>
+                            <h3>Critical Illness</h3>
+                            <p><strong>Up to RM 200</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Critical illness initial diagnose, accompanied with appropriate supporting documents, up to RM 200.00 as per claim basis.</p>
+                        </article>
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">🌪️</div>
+                            <h3>Natural Disaster</h3>
+                            <p><strong>RM 200 limit</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">The limit of contribution is RM200 only. A copy of certified evidence should be included for the claimed incident.</p>
+                        </article>
+                        <article class="app-card">
+                            <div class="icon" aria-hidden="true">🆘</div>
+                            <h3>Others</h3>
+                            <p><strong>Subject to Approval</strong></p>
+                            <p style="font-size: 0.9rem; color: var(--muted); margin-top: 8px;">Requisition of emergency fund other than the critical illness & natural disaster cases (is subject to SWF Campus committee approval).</p>
+                        </article>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 32px; padding: 24px; background: var(--light); border-radius: var(--radius);">
+                    <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">
+                        <strong>Note:</strong> All applications are subject to review and approval by the SWF Campus Committee. 
+                        Supporting documents are required for all claims. Please ensure you meet the eligibility criteria before applying.
+                    </p>
                 </div>
             </div>
         </section>

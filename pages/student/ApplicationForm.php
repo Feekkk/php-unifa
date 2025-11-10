@@ -34,12 +34,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bankName = trim($_POST['bank_name'] ?? '');
     $bankAccountNumber = trim($_POST['bank_account_number'] ?? '');
     
+    // Define category limits
+    $categoryLimits = [
+        'Bereavement (Khairat)' => [
+            'Student' => ['fixed' => 500, 'max' => 500],
+            'Parent' => ['fixed' => 200, 'max' => 200],
+            'Sibling' => ['fixed' => 100, 'max' => 100]
+        ],
+        'Illness & Injuries' => [
+            'Out-patient Treatment' => ['fixed' => null, 'max' => 30],
+            'In-patient Treatment' => ['fixed' => null, 'max' => 1000],
+            'Injuries' => ['fixed' => null, 'max' => 200]
+        ],
+        'Emergency' => [
+            'Critical Illness' => ['fixed' => null, 'max' => 200],
+            'Natural Disaster' => ['fixed' => null, 'max' => 200],
+            'Others' => ['fixed' => null, 'max' => null]
+        ]
+    ];
+    
     // Validation
-    if (empty($category) || empty($amountApplied) || empty($applicationData)) {
+    if (empty($category) || empty($subcategory) || empty($amountApplied) || empty($applicationData)) {
         $error = 'Please fill in all required fields.';
     } elseif (!is_numeric($amountApplied) || $amountApplied <= 0) {
         $error = 'Please enter a valid amount.';
+    } elseif (!isset($categoryLimits[$category]) || !isset($categoryLimits[$category][$subcategory])) {
+        $error = 'Invalid category or subcategory selected.';
     } else {
+        // Validate amount against limits
+        $limitInfo = $categoryLimits[$category][$subcategory];
+        
+        // Check if amount is fixed
+        if ($limitInfo['fixed'] !== null) {
+            // For fixed amounts, ensure the submitted amount matches
+            if (abs($amountApplied - $limitInfo['fixed']) > 0.01) {
+                $error = 'Invalid amount. This subcategory has a fixed amount of RM ' . number_format($limitInfo['fixed'], 2) . '.';
+            }
+        } else {
+            // For variable amounts, check maximum limit
+            if ($limitInfo['max'] !== null && $amountApplied > $limitInfo['max']) {
+                $error = 'Amount exceeds the maximum limit of RM ' . number_format($limitInfo['max'], 2) . ' for this subcategory.';
+            }
+        }
+    }
+    
+    if (empty($error)) {
         $conn = getDBConnection();
         
         // Insert application
@@ -321,6 +360,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #3c3;
             border: 1px solid #cfc;
         }
+        .form-group input[readonly] {
+            background-color: #f3f4f6 !important;
+            cursor: not-allowed;
+            border-color: #d1d5db;
+        }
+        .form-group input[readonly]:focus {
+            border-color: #d1d5db;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -367,28 +415,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     <div class="form-group">
                         <label for="category">Category <span class="required">*</span></label>
-                        <select id="category" name="category" required>
+                        <select id="category" name="category" required onchange="updateSubcategories()">
                             <option value="">Select a category</option>
-                            <option value="Emergency Financial Assistance">Emergency Financial Assistance</option>
-                            <option value="Tuition Fee Support">Tuition Fee Support</option>
-                            <option value="Book & Study Material Grants">Book & Study Material Grants</option>
-                            <option value="Living Allowance Support">Living Allowance Support</option>
-                            <option value="Project/Research Funding">Project/Research Funding</option>
-                            <option value="Technology & Equipment Aid">Technology & Equipment Aid</option>
+                            <option value="Bereavement (Khairat)">Bereavement (Khairat)</option>
+                            <option value="Illness & Injuries">Illness & Injuries</option>
+                            <option value="Emergency">Emergency</option>
                         </select>
                         <div class="help-text">Select the type of financial aid you are applying for</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="subcategory">Subcategory</label>
-                        <input type="text" id="subcategory" name="subcategory" placeholder="e.g. Medical Emergency, Semester Fees, etc." />
-                        <div class="help-text">Provide a more specific category if applicable (optional)</div>
+                        <label for="subcategory">Subcategory <span class="required">*</span></label>
+                        <select id="subcategory" name="subcategory" required disabled>
+                            <option value="">Select a category first</option>
+                        </select>
+                        <div class="help-text" id="subcategoryHelp">Please select a category first to see available subcategories</div>
                     </div>
 
                     <div class="form-group">
                         <label for="amount_applied">Amount Applied (RM) <span class="required">*</span></label>
                         <input type="number" id="amount_applied" name="amount_applied" step="0.01" min="0" placeholder="0.00" required />
-                        <div class="help-text">Enter the amount you are requesting in Malaysian Ringgit</div>
+                        <div class="help-text" id="amountHelp">Enter the amount you are requesting in Malaysian Ringgit</div>
                     </div>
 
                     <div class="form-group">
@@ -531,6 +578,195 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
+
+        // Category and subcategory mapping
+        const categorySubcategories = {
+            'Bereavement (Khairat)': [
+                { value: 'Student', label: 'Student (RM 500 fixed)' },
+                { value: 'Parent', label: 'Parent (RM 200 fixed)' },
+                { value: 'Sibling', label: 'Sibling (RM 100 fixed)' }
+            ],
+            'Illness & Injuries': [
+                { value: 'Out-patient Treatment', label: 'Out-patient Treatment (RM 30/semester, 2 claims/year)' },
+                { value: 'In-patient Treatment', label: 'In-patient Treatment (Up to RM 1,000)' },
+                { value: 'Injuries', label: 'Injuries (Up to RM 200 for support equipment)' }
+            ],
+            'Emergency': [
+                { value: 'Critical Illness', label: 'Critical Illness (Up to RM 200)' },
+                { value: 'Natural Disaster', label: 'Natural Disaster (RM 200 limit)' },
+                { value: 'Others', label: 'Others (Subject to SWF Campus committee approval)' }
+            ]
+        };
+
+        const categoryLimits = {
+            'Bereavement (Khairat)': {
+                'Student': { fixed: 500, max: 500 },
+                'Parent': { fixed: 200, max: 200 },
+                'Sibling': { fixed: 100, max: 100 }
+            },
+            'Illness & Injuries': {
+                'Out-patient Treatment': { fixed: null, max: 30 },
+                'In-patient Treatment': { fixed: null, max: 1000 },
+                'Injuries': { fixed: null, max: 200 }
+            },
+            'Emergency': {
+                'Critical Illness': { fixed: null, max: 200 },
+                'Natural Disaster': { fixed: null, max: 200 },
+                'Others': { fixed: null, max: null } // Subject to approval
+            }
+        };
+
+        function updateSubcategories() {
+            const categorySelect = document.getElementById('category');
+            const subcategorySelect = document.getElementById('subcategory');
+            const subcategoryHelp = document.getElementById('subcategoryHelp');
+            const amountInput = document.getElementById('amount_applied');
+            
+            const selectedCategory = categorySelect.value;
+            
+            // Clear existing options
+            subcategorySelect.innerHTML = '<option value="">Select a subcategory</option>';
+            
+            if (selectedCategory && categorySubcategories[selectedCategory]) {
+                // Enable subcategory select
+                subcategorySelect.disabled = false;
+                subcategorySelect.required = true;
+                
+                // Add subcategories for selected category
+                categorySubcategories[selectedCategory].forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.value;
+                    option.textContent = sub.label;
+                    subcategorySelect.appendChild(option);
+                });
+                
+                subcategoryHelp.textContent = 'Select the appropriate subcategory for your application';
+            } else {
+                // Disable subcategory select if no category selected
+                subcategorySelect.disabled = true;
+                subcategorySelect.required = false;
+                subcategoryHelp.textContent = 'Please select a category first to see available subcategories';
+            }
+            
+            // Reset amount field
+            amountInput.value = '';
+            updateAmountField();
+        }
+
+        function updateAmountField() {
+            const categorySelect = document.getElementById('category');
+            const subcategorySelect = document.getElementById('subcategory');
+            const amountInput = document.getElementById('amount_applied');
+            const amountHelp = amountInput.nextElementSibling;
+            
+            const category = categorySelect.value;
+            const subcategory = subcategorySelect.value;
+            
+            if (category && subcategory && categoryLimits[category] && categoryLimits[category][subcategory]) {
+                const limitInfo = categoryLimits[category][subcategory];
+                
+                // Check if amount is fixed
+                if (limitInfo.fixed !== null) {
+                    // Fixed amount - auto-fill and disable
+                    amountInput.value = limitInfo.fixed;
+                    amountInput.readOnly = true;
+                    amountInput.style.backgroundColor = '#f3f4f6';
+                    amountInput.style.cursor = 'not-allowed';
+                    amountInput.setAttribute('data-max-amount', limitInfo.fixed);
+                    if (amountHelp) {
+                        amountHelp.textContent = 'This is a fixed amount for this subcategory (RM ' + limitInfo.fixed.toFixed(2) + ').';
+                        amountHelp.style.color = 'var(--primary)';
+                    }
+                } else {
+                    // Variable amount
+                    amountInput.readOnly = false;
+                    amountInput.style.backgroundColor = '#fff';
+                    amountInput.style.cursor = 'text';
+                    
+                    if (limitInfo.max !== null) {
+                        amountInput.max = limitInfo.max;
+                        amountInput.placeholder = 'Maximum: RM ' + limitInfo.max.toFixed(2);
+                        amountInput.setAttribute('data-max-amount', limitInfo.max);
+                        if (amountHelp) {
+                            amountHelp.textContent = 'Enter the amount you are requesting (maximum RM ' + limitInfo.max.toFixed(2) + ').';
+                            amountHelp.style.color = 'var(--muted)';
+                        }
+                    } else {
+                        amountInput.removeAttribute('max');
+                        amountInput.placeholder = 'Amount (subject to SWF Campus committee approval)';
+                        amountInput.removeAttribute('data-max-amount');
+                        if (amountHelp) {
+                            amountHelp.textContent = 'Enter the amount you are requesting. This amount is subject to SWF Campus committee approval.';
+                            amountHelp.style.color = 'var(--muted)';
+                        }
+                    }
+                }
+            } else {
+                // Reset to default
+                amountInput.value = '';
+                amountInput.readOnly = false;
+                amountInput.style.backgroundColor = '#fff';
+                amountInput.style.cursor = 'text';
+                amountInput.removeAttribute('max');
+                amountInput.placeholder = '0.00';
+                amountInput.removeAttribute('data-max-amount');
+                if (amountHelp) {
+                    amountHelp.textContent = 'Enter the amount you are requesting in Malaysian Ringgit';
+                    amountHelp.style.color = 'var(--muted)';
+                }
+            }
+        }
+
+        // Update amount field when subcategory changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const categorySelect = document.getElementById('category');
+            const subcategorySelect = document.getElementById('subcategory');
+            
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function() {
+                    // Reset subcategory when category changes
+                    subcategorySelect.value = '';
+                    updateSubcategories();
+                });
+            }
+            
+            if (subcategorySelect) {
+                subcategorySelect.addEventListener('change', updateAmountField);
+            }
+            
+            // Validate amount on input
+            const amountInput = document.getElementById('amount_applied');
+            if (amountInput) {
+                amountInput.addEventListener('input', function() {
+                    const maxAmount = this.getAttribute('data-max-amount');
+                    if (maxAmount && parseFloat(this.value) > parseFloat(maxAmount)) {
+                        this.setCustomValidity('Amount exceeds the maximum limit of RM ' + parseFloat(maxAmount).toFixed(2));
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+                
+                // Validate on form submit
+                const form = document.getElementById('applicationForm');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        // Re-enable disabled fields so they are submitted
+                        const subcategorySelect = document.getElementById('subcategory');
+                        if (subcategorySelect && subcategorySelect.disabled) {
+                            subcategorySelect.disabled = false;
+                        }
+                        
+                        const maxAmount = amountInput.getAttribute('data-max-amount');
+                        if (maxAmount && parseFloat(amountInput.value) > parseFloat(maxAmount)) {
+                            e.preventDefault();
+                            amountInput.setCustomValidity('Amount exceeds the maximum limit of RM ' + parseFloat(maxAmount).toFixed(2));
+                            amountInput.reportValidity();
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
     </script>
 </body>
 </html>
