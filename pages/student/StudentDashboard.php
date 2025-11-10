@@ -227,8 +227,8 @@ if ($sessionMessage) {
             </a>
             <div class="nav-links">
                 <a href="StudentDashboard.php">Dashboard</a>
-                <a href="#">Applications</a>
-                <a href="#">Profile</a>
+                <a href="ApplicationForm.php">New Application</a>
+                <a href="EditProfile.php">Profile</a>
                 <form method="post" action="../logout.php" style="display: inline;">
                     <button type="submit" class="logout-btn" name="logout">Logout</button>
                 </form>
@@ -299,7 +299,7 @@ if ($sessionMessage) {
                     <div class="action-card">
                         <h3>Update Profile</h3>
                         <p>Manage your account information</p>
-                        <a href="#" class="btn btn-outline">Edit Profile</a>
+                        <a href="EditProfile.php" class="btn btn-outline">Edit Profile</a>
                     </div>
                 </div>
             </div>
