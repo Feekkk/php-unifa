@@ -10,6 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $studentId = trim($_POST['studentId'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $bankName = trim($_POST['bankName'] ?? '');
+    $bankNumber = trim($_POST['bankNumber'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm = $_POST['confirm'] ?? '';
     
@@ -37,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             
             // Insert user
-            $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, phone, password, role) VALUES (?, ?, ?, ?, ?, 'student')");
-            $stmt->bind_param("sssss", $fullName, $email, $studentId, $phone, $hashedPassword);
+            $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, phone, bank_name, bank_number, password, role) VALUES (?, ?, ?, ?, ?, ?, ?, 'student')");
+            $stmt->bind_param("sssssss", $fullName, $email, $studentId, $phone, $bankName, $bankNumber, $hashedPassword);
             
             if ($stmt->execute()) {
                 // Get the newly created user
@@ -111,6 +113,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-row">
                         <label for="phone">Phone</label>
                         <input class="input" type="tel" id="phone" name="phone" placeholder="e.g. 012-3456789" />
+                    </div>
+                    <div class="form-row">
+                        <label for="bankName">Bank Name</label>
+                        <input class="input" type="text" id="bankName" name="bankName" placeholder="e.g. Maybank, CIMB, Public Bank" />
+                    </div>
+                    <div class="form-row">
+                        <label for="bankNumber">Bank Account Number</label>
+                        <input class="input" type="text" id="bankNumber" name="bankNumber" placeholder="e.g. 1234567890" />
                     </div>
                     <div class="form-row">
                         <label for="password">Password</label>
