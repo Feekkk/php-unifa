@@ -9,6 +9,50 @@ $adminId = $_SESSION['user_id'];
 $adminName = $_SESSION['user_name'];
 $adminEmail = $_SESSION['user_email'];
 
+// Handle delete user
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    $userIdToDelete = intval($_POST['user_id'] ?? 0);
+    
+    if ($userIdToDelete > 0 && $userIdToDelete != $adminId) {
+        $conn = getDBConnection();
+        
+        // Check if user has applications
+        $stmt = $conn->prepare("SELECT COUNT(*) as app_count FROM applications WHERE user_id = ?");
+        $stmt->bind_param("i", $userIdToDelete);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $appCount = $result->fetch_assoc()['app_count'];
+        $stmt->close();
+        
+        if ($appCount > 0) {
+            $_SESSION['message'] = 'Cannot delete user with existing applications. Please delete applications first.';
+            $_SESSION['message_type'] = 'error';
+        } else {
+            // Delete user
+            $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->bind_param("i", $userIdToDelete);
+            
+            if ($stmt->execute()) {
+                $_SESSION['message'] = 'User deleted successfully!';
+                $_SESSION['message_type'] = 'success';
+            } else {
+                $_SESSION['message'] = 'Error deleting user: ' . $conn->error;
+                $_SESSION['message_type'] = 'error';
+            }
+            $stmt->close();
+        }
+        
+        $conn->close();
+        header('Location: ManageUser.php');
+        exit();
+    } elseif ($userIdToDelete == $adminId) {
+        $_SESSION['message'] = 'You cannot delete your own account.';
+        $_SESSION['message_type'] = 'error';
+        header('Location: ManageUser.php');
+        exit();
+    }
+}
+
 // Get filter parameters
 $roleFilter = $_GET['role'] ?? '';
 $searchQuery = $_GET['search'] ?? '';
@@ -394,6 +438,46 @@ if ($sessionMessage) {
             font-size: 0.875rem;
             font-weight: 600;
         }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-edit {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-edit:hover {
+            background: #0a3d62;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .btn-delete {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .btn-delete:hover {
+            background: #fecaca;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
         .empty-state {
             text-align: center;
             padding: 64px 24px;
@@ -535,7 +619,7 @@ if ($sessionMessage) {
                                     <th>Semester</th>
                                     <th>Phone</th>
                                     <th>Applications</th>
-                                    <th>Registered</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -590,7 +674,15 @@ if ($sessionMessage) {
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?php echo date('d M Y', strtotime($user['created_at'])); ?>
+                                            <div class="action-buttons">
+                                                <a href="EditUser.php?id=<?php echo $user['id']; ?>" class="btn-action btn-edit">Edit</a>
+                                                <form method="post" action="" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
+                                                    <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                                    <button type="submit" name="delete_user" class="btn-action btn-delete" <?php echo ($user['id'] == $adminId || $appCount > 0) ? 'disabled' : ''; ?>>
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
