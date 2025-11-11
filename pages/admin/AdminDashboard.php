@@ -273,6 +273,7 @@ if ($sessionMessage) {
             <div class="nav-links">
                 <a href="AdminDashboard.php">Dashboard</a>
                 <a href="ViewApplication.php">Applications</a>
+                <a href="ManageUser.php">Users</a>
                 <a href="EditProfile.php">Profile</a>
                 <form method="post" action="../logout.php" style="display: inline;">
                     <button type="submit" class="logout-btn" name="logout">Logout</button>
@@ -349,9 +350,9 @@ if ($sessionMessage) {
                         <a href="ViewApplication.php" class="btn btn-primary">View All</a>
                     </div>
                     <div class="action-card">
-                        <h3>Manage Students</h3>
-                        <p>View and manage student accounts</p>
-                        <a href="#" class="btn btn-outline">Manage</a>
+                        <h3>Manage User</h3>
+                        <p>View and manage user's accounts</p>
+                        <a href="ManageUser.php" class="btn btn-outline">Manage</a>
                     </div>
                     <div class="action-card">
                         <h3>Edit Profile</h3>
