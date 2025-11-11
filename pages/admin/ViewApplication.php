@@ -272,10 +272,10 @@ if ($sessionMessage) {
         }
         .application-card {
             background: var(--card);
-            padding: 32px;
+            padding: 24px;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             border: 1px solid #e5e7eb;
             transition: all 0.2s ease;
         }
@@ -286,9 +286,52 @@ if ($sessionMessage) {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 24px;
+            margin-bottom: 0;
             padding-bottom: 16px;
             border-bottom: 2px solid var(--light);
+            cursor: pointer;
+        }
+        .application-header:hover {
+            opacity: 0.8;
+        }
+        .application-header-content {
+            flex: 1;
+        }
+        .application-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .collapse-icon {
+            font-size: 1.25rem;
+            color: var(--muted);
+            transition: transform 0.3s ease;
+        }
+        .collapse-icon.expanded {
+            transform: rotate(180deg);
+        }
+        .application-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding-top: 0;
+        }
+        .application-body.expanded {
+            max-height: 10000px;
+            padding-top: 24px;
+        }
+        .application-summary {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .application-id {
             font-size: 0.875rem;
@@ -654,20 +697,40 @@ if ($sessionMessage) {
                     $applicationData = !empty($app['application_data']) ? json_decode($app['application_data'], true) : [];
                     $documents = $documentsByApp[$app['id']] ?? [];
                 ?>
-                    <div class="application-card">
-                        <div class="application-header">
-                            <div>
+                    <div class="application-card" data-application-id="<?php echo $app['id']; ?>">
+                        <div class="application-header" onclick="toggleApplication(<?php echo $app['id']; ?>)">
+                            <div class="application-header-content">
                                 <div class="application-id">Application #<?php echo $app['id']; ?></div>
                                 <h2 class="application-title"><?php echo htmlspecialchars($app['category']); ?>
                                     <?php if (!empty($app['subcategory'])): ?>
                                         <span style="font-weight: 400; font-size: 1.25rem; color: var(--muted);"> - <?php echo htmlspecialchars($app['subcategory']); ?></span>
                                     <?php endif; ?>
                                 </h2>
+                                <div class="application-summary">
+                                    <div class="summary-item">
+                                        <strong>Student:</strong> <?php echo htmlspecialchars($app['student_name']); ?> (<?php echo htmlspecialchars($app['student_id']); ?>)
+                                    </div>
+                                    <div class="summary-item">
+                                        <strong>Amount:</strong> RM <?php echo number_format($app['amount_applied'], 2); ?>
+                                    </div>
+                                    <div class="summary-item">
+                                        <strong>Submitted:</strong> <?php echo date('d M Y', strtotime($app['created_at'])); ?>
+                                    </div>
+                                    <?php if (!empty($documents)): ?>
+                                        <div class="summary-item">
+                                            <strong>Documents:</strong> <?php echo count($documents); ?> file(s)
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                            <span class="status-badge <?php echo getStatusBadgeClass($app['status']); ?>">
-                                <?php echo getStatusLabel($app['status']); ?>
-                            </span>
+                            <div class="application-toggle">
+                                <span class="status-badge <?php echo getStatusBadgeClass($app['status']); ?>">
+                                    <?php echo getStatusLabel($app['status']); ?>
+                                </span>
+                                <span class="collapse-icon">▼</span>
+                            </div>
                         </div>
+                        <div class="application-body" id="app-body-<?php echo $app['id']; ?>">
 
                         <div class="application-grid">
                             <!-- Student Information -->
@@ -793,6 +856,7 @@ if ($sessionMessage) {
                                 </div>
                             </div>
                         <?php endif; ?>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -801,6 +865,20 @@ if ($sessionMessage) {
 
     <?php include '../component/footer.php'; renderFooter('../../'); ?>
     <script src="../../js/main.js"></script>
+    <script>
+        function toggleApplication(appId) {
+            const body = document.getElementById('app-body-' + appId);
+            const icon = body.previousElementSibling.querySelector('.collapse-icon');
+            
+            if (body.classList.contains('expanded')) {
+                body.classList.remove('expanded');
+                icon.classList.remove('expanded');
+            } else {
+                body.classList.add('expanded');
+                icon.classList.add('expanded');
+            }
+        }
+    </script>
 </body>
 </html>
 
