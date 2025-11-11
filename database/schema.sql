@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS applications (
     application_data TEXT COMMENT 'JSON data containing category-specific fields (clinic_name, reason_visit, visit_date, check_in_date, check_out_date, case_description, etc.)',
     bank_name VARCHAR(100),
     bank_account_number VARCHAR(50),
-    status ENUM('pending', 'under_review', 'approved', 'rejected') DEFAULT 'pending',
+    status ENUM('pending', 'under_review', 'verified', 'approved', 'rejected') DEFAULT 'pending',
     admin_notes TEXT,
     committee_remarks TEXT,
     amount_approved DECIMAL(10, 2),

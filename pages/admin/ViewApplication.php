@@ -9,6 +9,35 @@ $adminId = $_SESSION['user_id'];
 $adminName = $_SESSION['user_name'];
 $adminEmail = $_SESSION['user_email'];
 
+// Handle verification form submission
+$verificationMessage = '';
+$verificationMessageType = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_application'])) {
+    $applicationId = intval($_POST['application_id'] ?? 0);
+    $remarks = trim($_POST['remarks'] ?? '');
+    
+    if ($applicationId > 0) {
+        $conn = getDBConnection();
+        
+        // Update application: set status to 'verified', admin_notes, and verified_by
+        $stmt = $conn->prepare("UPDATE applications SET status = 'verified', admin_notes = ?, verified_by = ? WHERE id = ?");
+        $stmt->bind_param("sii", $remarks, $adminId, $applicationId);
+        
+        if ($stmt->execute()) {
+            $_SESSION['message'] = 'Application verified successfully!';
+            $_SESSION['message_type'] = 'success';
+            header('Location: ViewApplication.php');
+            exit();
+        } else {
+            $_SESSION['message'] = 'Error verifying application: ' . $conn->error;
+            $_SESSION['message_type'] = 'error';
+        }
+        
+        $stmt->close();
+        $conn->close();
+    }
+}
+
 // Get filter parameters
 $statusFilter = $_GET['status'] ?? '';
 $categoryFilter = $_GET['category'] ?? '';
@@ -17,7 +46,7 @@ $searchQuery = $_GET['search'] ?? '';
 // Build query
 $conn = getDBConnection();
 
-// Base query to get all applications with student info
+// Base query to get all applications with student info and verifier info
 $query = "SELECT 
     a.*,
     u.full_name as student_name,
@@ -25,9 +54,11 @@ $query = "SELECT
     u.student_id,
     u.phone as student_phone,
     u.course as student_course,
-    u.semester as student_semester
+    u.semester as student_semester,
+    admin.name as verified_by_name
 FROM applications a
 INNER JOIN users u ON a.user_id = u.id
+LEFT JOIN admin ON a.verified_by = admin.id
 WHERE 1=1";
 
 $params = [];
@@ -120,6 +151,8 @@ function getStatusBadgeClass($status) {
             return 'status-rejected';
         case 'under_review':
             return 'status-review';
+        case 'verified':
+            return 'status-verified';
         default:
             return 'status-pending';
     }
@@ -134,6 +167,8 @@ function getStatusLabel($status) {
             return 'Rejected';
         case 'under_review':
             return 'Under Review';
+        case 'verified':
+            return 'Verified';
         default:
             return 'Pending';
     }
@@ -333,6 +368,71 @@ if ($sessionMessage) {
             align-items: center;
             gap: 6px;
         }
+        .verification-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid var(--light);
+        }
+        .verification-section h4 {
+            margin: 0 0 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .verification-form {
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--radius-sm);
+        }
+        .verification-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+        .verification-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(10, 61, 98, 0.1);
+        }
+        .verification-form .form-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-verify {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-verify:hover {
+            background: #0a3d62;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .verification-info {
+            padding: 12px;
+            background: #d1fae5;
+            border: 1px solid #86efac;
+            border-radius: var(--radius-sm);
+            color: #065f46;
+            font-size: 0.9rem;
+        }
+        .verification-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
         .application-id {
             font-size: 0.875rem;
             color: var(--muted);
@@ -368,6 +468,10 @@ if ($sessionMessage) {
         .status-rejected {
             background: #fee2e2;
             color: #991b1b;
+        }
+        .status-verified {
+            background: #dbeafe;
+            color: #1e40af;
         }
         .application-grid {
             display: grid;
@@ -638,6 +742,10 @@ if ($sessionMessage) {
                     <div class="value"><?php echo count(array_filter($applications, fn($a) => $a['status'] === 'under_review')); ?></div>
                 </div>
                 <div class="stat-item">
+                    <div class="label">Verified</div>
+                    <div class="value"><?php echo count(array_filter($applications, fn($a) => $a['status'] === 'verified')); ?></div>
+                </div>
+                <div class="stat-item">
                     <div class="label">Approved</div>
                     <div class="value"><?php echo count(array_filter($applications, fn($a) => $a['status'] === 'approved')); ?></div>
                 </div>
@@ -658,6 +766,7 @@ if ($sessionMessage) {
                                 <option value="">All Statuses</option>
                                 <option value="pending" <?php echo $statusFilter === 'pending' ? 'selected' : ''; ?>>Pending</option>
                                 <option value="under_review" <?php echo $statusFilter === 'under_review' ? 'selected' : ''; ?>>Under Review</option>
+                                <option value="verified" <?php echo $statusFilter === 'verified' ? 'selected' : ''; ?>>Verified</option>
                                 <option value="approved" <?php echo $statusFilter === 'approved' ? 'selected' : ''; ?>>Approved</option>
                                 <option value="rejected" <?php echo $statusFilter === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                             </select>
@@ -856,6 +965,33 @@ if ($sessionMessage) {
                                 </div>
                             </div>
                         <?php endif; ?>
+
+                        <!-- Verification Section -->
+                        <div class="verification-section">
+                            <h4>Verification</h4>
+                            <?php if ($app['status'] === 'verified'): ?>
+                                <div class="verification-info">
+                                    <strong>✓ Verified</strong>
+                                    <?php if (!empty($app['verified_by_name'])): ?>
+                                        Verified by: <?php echo htmlspecialchars($app['verified_by_name']); ?>
+                                    <?php endif; ?>
+                                    <?php if (!empty($app['admin_notes'])): ?>
+                                        <div style="margin-top: 8px;">
+                                            <strong>Remarks:</strong><br>
+                                            <?php echo nl2br(htmlspecialchars($app['admin_notes'])); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php else: ?>
+                                <form method="post" action="" class="verification-form" onsubmit="return confirm('Are you sure you want to verify this application?');">
+                                    <input type="hidden" name="application_id" value="<?php echo $app['id']; ?>">
+                                    <textarea name="remarks" placeholder="Enter remarks (optional)" rows="4"><?php echo htmlspecialchars($app['admin_notes'] ?? ''); ?></textarea>
+                                    <div class="form-actions">
+                                        <button type="submit" name="verify_application" class="btn-verify">Verify</button>
+                                    </div>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
