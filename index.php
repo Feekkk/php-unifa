@@ -71,42 +71,81 @@ $showLogoutMessage = isset($_GET['logged_out']) && $_GET['logged_out'] == '1';
 
         <!-- Introduction Section -->
         <section id="about" class="section intro" aria-labelledby="intro-title">
-            <div class="container intro-grid">
-                <div class="intro-text">
-                    <h2 id="intro-title">History of Student Welfare Fund</h2>
-                    <p>
-                        The Student Welfare Fund (SWF) at UniKL RCMP was established to support students facing
-                        financial challenges that may affect their academic journey. Over the years, SWF has grown
-                        into a structured and accountable program, providing timely assistance to students in need.
-                    </p>
-                    <p>
-                        Our mission is to ensure that financial barriers do not hinder student success. We collaborate
-                        with the university, alumni, and partners to mobilize resources and deliver aid fairly and
-                        transparently.
-                    </p>
-                    <ul class="bullets">
-                        <li>Established to provide immediate support during financial emergencies</li>
-                        <li>Committed to equity, accountability, and student development</li>
-                        <li>Strengthened through partnerships and community support</li>
-                    </ul>
-                    <div class="stats">
-                        <div class="stat-card">
-                            <div class="stat-value">5,200+</div>
-                            <div class="stat-label">Students Helped</div>
+            <div class="container">
+                <h2 id="intro-title" style="text-align: center; margin-bottom: 24px; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700; color: var(--text);">History of Student Welfare Fund</h2>
+                <p style="text-align: center; color: var(--muted); font-size: 1.125rem; max-width: 700px; margin: 0 auto 64px; line-height: 1.75; font-weight: 400; letter-spacing: 0.01em; padding: 0 24px;">
+                    The Student Welfare Fund (SWF) is a fund established by the Management of UniKL to provide financial assistance to students in need. It was established in 2005 and rebranded to SWF in 2018.
+                </p>
+                
+                <!-- Timeline -->
+                <div class="timeline-container">
+                    <div class="timeline-line"></div>
+                    
+                    <!-- Timeline Item 1 -->
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <div class="timeline-dot"></div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value">RM 3.4M</div>
-                            <div class="stat-label">Funds Distributed</div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">September 30, 2005</div>
+                            <h3 class="timeline-title">Establishment of TKS</h3>
+                            <p class="timeline-description">
+                                Tabung Kebajikan Siswa (TKS) was established upon endorsed and approved by the Management of UniKL.
+                            </p>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value">96%</div>
-                            <div class="stat-label">Success Rate</div>
+                    </div>
+                    
+                    <!-- Timeline Item 2 -->
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <div class="timeline-dot"></div>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">December 12, 2017</div>
+                            <h3 class="timeline-title">Rebranding to SWF</h3>
+                            <p class="timeline-description">
+                                TKS is rebranded to Student Welfare Fund (SWF), approved on TMM 30th Jan 2018 (TMM NO.125 ( 2/2018)).
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Item 3 -->
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <div class="timeline-dot"></div>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">Present</div>
+                            <h3 class="timeline-title">Current Management</h3>
+                            <p class="timeline-description">
+                                The management of UniKL empowers Campus Lifestyle Division and Campus Lifestyle Section to manage the operation of SWF.
+                            </p>
                         </div>
                     </div>
                 </div>
-                <div class="intro-visual" aria-hidden="true">
-                    <div class="visual-card">
-                        <img src="public/rcmp-map.png" alt="Students studying together" />
+                
+                <!-- Objectives Section -->
+                <div class="objectives-section" style="margin-top: 80px; padding: 60px 40px; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);">
+                    <div class="objectives-container" style="display: grid; grid-template-columns: 250px 1fr; gap: 60px; align-items: start; max-width: 1100px; margin: 0 auto;">
+                        <div class="objectives-header">
+                            <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; line-height: 1.3;">
+                                SWF RCMP<br />OBJECTIVES
+                            </h3>
+                        </div>
+                        <div class="objectives-content">
+                            <p style="color: var(--text); font-size: 1.125rem; line-height: 1.8; margin: 0 0 24px; font-weight: 400;">
+                                To provide essential welfare support to UniKL students, including assistance in cases of emergencies, medical conditions or injuries, and bereavement.
+                            </p>
+                            <p style="color: var(--text); font-size: 1.125rem; line-height: 1.8; margin: 0 0 24px; font-weight: 400;">
+                                To ensure timely and transparent distribution of financial aid to eligible students who face genuine financial hardships that may impede their academic progress and personal well-being.
+                            </p>
+                            <p style="color: var(--text); font-size: 1.125rem; line-height: 1.8; margin: 0 0 24px; font-weight: 400;">
+                                To foster a supportive community environment where students feel secure knowing that assistance is available during challenging times, promoting mental and emotional well-being alongside financial stability.
+                            </p>
+                            <p style="color: var(--text); font-size: 1.125rem; line-height: 1.8; margin: 0; font-weight: 400;">
+                                To maintain accountability and integrity in fund management, ensuring that resources are utilized effectively and equitably for the benefit of the student community, while building trust through transparent processes and responsible stewardship.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -115,37 +154,94 @@ $showLogoutMessage = isset($_GET['logged_out']) && $_GET['logged_out'] == '1';
         <!-- SWF Structure Section -->
         <section class="section structure" aria-labelledby="structure-title">
             <div class="container">
-                <h2 id="structure-title">How Our Fund Raises Money</h2>
-                <div class="card-grid">
-                    <div class="info-card">
-                        <div class="icon" aria-hidden="true">🏛️</div>
-                        <h3>University Budget Allocation</h3>
-                        <p>Annual allocations dedicated to student welfare and emergency support.</p>
+                <h2 id="structure-title" style="text-align: center; margin-bottom: 16px; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700; color: var(--text);">Student Contribution SWF</h2>
+                <p style="text-align: center; color: var(--muted); font-size: 1.125rem; max-width: 700px; margin: 0 auto 48px; line-height: 1.75; padding: 0 24px;">
+                    The fund collection is based on SWF fees collected from registered students.
+                </p>
+                <div class="contribution-cards">
+                    <div class="contribution-card">
+                        <div class="contribution-icon" aria-hidden="true">👨‍🎓</div>
+                        <div class="contribution-value" data-target="30">0</div>
+                        <div class="contribution-label">RM per Semester</div>
+                        <div class="contribution-description">Local Student</div>
                     </div>
-                    <div class="info-card">
-                        <div class="icon" aria-hidden="true">🎓</div>
-                        <h3>Alumni Donations</h3>
-                        <p>Contributions from UniKL alumni who champion student success.</p>
+                    <div class="contribution-card">
+                        <div class="contribution-icon" aria-hidden="true">🌍</div>
+                        <div class="contribution-value" data-target="50">0</div>
+                        <div class="contribution-label">RM per Semester</div>
+                        <div class="contribution-description">International Student</div>
                     </div>
-                    <div class="info-card">
-                        <div class="icon" aria-hidden="true">🤝</div>
-                        <h3>Corporate Sponsorships</h3>
-                        <p>Strategic partnerships aligning CSR goals with student needs.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SWF Campus Committee Members Section -->
+        <section class="section committee" aria-labelledby="committee-title">
+            <div class="container">
+                <div class="committee-wrapper">
+                    <!-- Left Column: Title and Description -->
+                    <div class="committee-left">
+                        <h2 id="committee-title" class="committee-main-title">SWF Campus<br />Committee Members</h2>
+                        <p class="committee-description">
+                            The organizational structure of the SWF Campus Committee, showing the hierarchy of roles and responsibilities from top to bottom.
+                        </p>
                     </div>
-                    <div class="info-card">
-                        <div class="icon" aria-hidden="true">🏛️</div>
-                        <h3>Government Grants</h3>
-                        <p>Targeted grants supporting education access and retention.</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="icon" aria-hidden="true">🎉</div>
-                        <h3>Fundraising Events</h3>
-                        <p>Community-driven events to raise awareness and funds.</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="icon" aria-hidden="true">👩‍🎓</div>
-                        <h3>Student Contributions</h3>
-                        <p>Voluntary contributions reinforcing a culture of solidarity.</p>
+                    
+                    <!-- Right Column: Committee Members Cards -->
+                    <div class="committee-right">
+                        <!-- Level 1: Head of Campus / Dean -->
+                        <div class="committee-card">
+                            <div class="committee-card-icon">👑</div>
+                            <div class="committee-card-content">
+                                <h3 class="committee-card-title">Head of Campus / Dean</h3>
+                                <p class="committee-card-description">The highest authority in the SWF Campus Committee, providing overall leadership and strategic direction for the Student Welfare Fund.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Level 2: Deputy Dean, SDCL -->
+                        <div class="committee-card">
+                            <div class="committee-card-icon">🎓</div>
+                            <div class="committee-card-content">
+                                <h3 class="committee-card-title">Deputy Dean, SDCL</h3>
+                                <p class="committee-card-description">Supports the Head of Campus in managing student development and campus lifestyle initiatives, ensuring alignment with institutional goals.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Level 3: Campus Lifestyle Head -->
+                        <div class="committee-card">
+                            <div class="committee-card-icon">👔</div>
+                            <div class="committee-card-content">
+                                <h3 class="committee-card-title">Campus Lifestyle Head</h3>
+                                <p class="committee-card-description">Oversees the day-to-day operations of campus lifestyle programs and coordinates SWF activities with various departments.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Level 4: Representative of Finance and Administration Department -->
+                        <div class="committee-card">
+                            <div class="committee-card-icon">💰</div>
+                            <div class="committee-card-content">
+                                <h3 class="committee-card-title">Representative of Finance and Administration Department</h3>
+                                <p class="committee-card-description">Manages financial oversight, budget allocation, and ensures proper administrative procedures are followed for all SWF transactions.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Level 5: Executive, Campus Lifestyle Section -->
+                        <div class="committee-card">
+                            <div class="committee-card-icon">📋</div>
+                            <div class="committee-card-content">
+                                <h3 class="committee-card-title">Executive, Campus Lifestyle Section</h3>
+                                <p class="committee-card-description">Handles administrative tasks, processes applications, and provides support for committee operations and student inquiries.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Level 6: President of Student Representative Committee -->
+                        <div class="committee-card">
+                            <div class="committee-card-icon">👥</div>
+                            <div class="committee-card-content">
+                                <h3 class="committee-card-title">President of Student Representative Committee</h3>
+                                <p class="committee-card-description">Represents student interests and provides student perspective in committee decisions. Participates by invitation to ensure student voice is heard.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
