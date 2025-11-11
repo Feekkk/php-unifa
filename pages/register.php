@@ -80,6 +80,124 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+        .auth-page .auth-card-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        .auth-card {
+            max-width: 100%;
+        }
+        .video-card {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            border: 1px solid #eef2f7;
+        }
+        .video-card-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            width: 100%;
+            height: 100%;
+        }
+        .video-card-text {
+            text-align: center;
+            z-index: 4;
+            position: relative;
+        }
+        .video-card-text h2 {
+            margin: 0 0 12px;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+        .video-card-text p {
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        .video-card-text p:last-child {
+            margin-bottom: 0;
+        }
+        .video-card-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 8px;
+            text-align: left;
+        }
+        .video-card-features .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .video-card-features .feature-item::before {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+        }
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.02);
+            z-index: 3;
+            pointer-events: none;
+            border-radius: var(--radius-sm);
+        }
+        @media (max-width: 1024px) {
+            .auth-page .auth-card-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .video-card {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <?php 
@@ -151,6 +269,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div style="text-align: center;">
                     <p class="small" style="margin: 0 0 8px;">Already have an account? <a class="link" href="login.php">Login</a></p>
                     <p class="small" style="margin: 0;"><a class="link" href="../index.php">← Back to Home</a></p>
+                </div>
+            </div>
+        </div>
+        <!-- Video Card -->
+        <div class="video-card">
+            <div class="video-card-content">
+                <div class="video-card-text">
+                    <h2>RCMP UniFa</h2>
+                    <p>Join thousands of students who have successfully applied for financial aid through our streamlined platform.</p>
+                    <div class="video-card-features">
+                        <div class="feature-item">
+                            <span>Simple registration process</span>
+                        </div>
+                        <div class="feature-item">
+                            <span>Multiple aid programs available</span>
+                        </div>
+                        <div class="feature-item">
+                            <span>Real-time application tracking</span>
+                        </div>
+                        <div class="feature-item">
+                            <span>Secure and confidential</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-wrapper">
+                    <video autoplay loop muted playsinline>
+                        <source src="../public/logo-animation.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="video-overlay"></div>
                 </div>
             </div>
         </div>
