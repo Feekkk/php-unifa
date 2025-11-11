@@ -333,6 +333,31 @@ if ($sessionMessage) {
             justify-content: space-between;
             align-items: center;
         }
+        .table-header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn-add {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-add:hover {
+            background: #0a3d62;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
         .table-header h3 {
             margin: 0;
             font-size: 1.25rem;
@@ -600,6 +625,9 @@ if ($sessionMessage) {
             <div class="users-table">
                 <div class="table-header">
                     <h3>All Users</h3>
+                    <div class="table-header-actions">
+                        <a href="AddUser.php" class="btn-add">+ Add User</a>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <?php if (empty($users)): ?>
@@ -676,12 +704,18 @@ if ($sessionMessage) {
                                         <td>
                                             <div class="action-buttons">
                                                 <a href="EditUser.php?id=<?php echo $user['id']; ?>" class="btn-action btn-edit">Edit</a>
-                                                <form method="post" action="" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
-                                                    <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                                    <button type="submit" name="delete_user" class="btn-action btn-delete" <?php echo ($user['id'] == $adminId || $appCount > 0) ? 'disabled' : ''; ?>>
-                                                        Delete
-                                                    </button>
-                                                </form>
+                                                <?php if ($user['id'] == $adminId): ?>
+                                                    <span class="btn-action btn-delete" style="opacity: 0.5; cursor: not-allowed;" title="Cannot delete your own account">Delete</span>
+                                                <?php elseif ($appCount > 0): ?>
+                                                    <span class="btn-action btn-delete" style="opacity: 0.5; cursor: not-allowed;" title="Cannot delete user with applications">Delete</span>
+                                                <?php else: ?>
+                                                    <form method="post" action="" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
+                                                        <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                                        <button type="submit" name="delete_user" class="btn-action btn-delete">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
