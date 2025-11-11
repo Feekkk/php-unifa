@@ -102,30 +102,56 @@ if ($sessionMessage) {
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
             margin-bottom: 32px;
         }
         .stat-card {
             background: var(--card);
-            padding: 24px;
+            padding: 20px;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             border: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100px;
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
         .stat-card h3 {
-            margin: 0 0 12px;
-            font-size: 0.875rem;
+            margin: 0 0 8px;
+            font-size: 0.75rem;
             font-weight: 600;
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--primary);
             margin: 0;
+            line-height: 1.2;
+        }
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
         .dashboard-section {
             background: var(--card);
