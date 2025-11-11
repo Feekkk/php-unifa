@@ -127,6 +127,48 @@ if ($adminTableCheck->num_rows > 0) {
     $messages[] = "ℹ Admin table not found, skipping admin account creation";
 }
 
+// Insert hardcoded committee accounts
+$messages[] = "---";
+$messages[] = "Setting up committee accounts...";
+
+// Check if committee table exists
+$committeeTableCheck = $conn->query("SHOW TABLES LIKE 'committee'");
+if ($committeeTableCheck->num_rows > 0) {
+    // Check if committees already exist
+    $committeeCheck = $conn->query("SELECT COUNT(*) as count FROM committee WHERE email IN ('committee1@unikl.com', 'committee2@unikl.com', 'committee3@unikl.com', 'committee4@unikl.com', 'committee5@unikl.com')");
+    $committeeCount = $committeeCheck->fetch_assoc()['count'];
+    
+    if ($committeeCount == 0) {
+        // Hash password (using same password for all committee accounts)
+        $committeePassword = password_hash('committee123', PASSWORD_DEFAULT);
+        
+        // Committee accounts data
+        $committeeAccounts = [
+            ['name' => 'Dr. Ahmad bin Abdullah', 'email' => 'committee1@unikl.com'],
+            ['name' => 'Prof. Siti Nurhaliza', 'email' => 'committee2@unikl.com'],
+            ['name' => 'Dr. Muhammad Faris', 'email' => 'committee3@unikl.com'],
+            ['name' => 'Pn. Norazlina binti Hassan', 'email' => 'committee4@unikl.com'],
+            ['name' => 'En. Zulkifli bin Ismail', 'email' => 'committee5@unikl.com']
+        ];
+        
+        // Insert committee accounts
+        $stmt = $conn->prepare("INSERT INTO committee (name, email, password) VALUES (?, ?, ?)");
+        foreach ($committeeAccounts as $account) {
+            $stmt->bind_param("sss", $account['name'], $account['email'], $committeePassword);
+            if ($stmt->execute()) {
+                $messages[] = "✓ Created committee account: {$account['email']} ({$account['name']})";
+            } else {
+                $messages[] = "✗ Error creating committee account {$account['email']}: " . $conn->error;
+            }
+        }
+        $stmt->close();
+    } else {
+        $messages[] = "ℹ Committee accounts already exist";
+    }
+} else {
+    $messages[] = "ℹ Committee table not found, skipping committee account creation";
+}
+
 $conn->close();
 ?>
 <!DOCTYPE html>
