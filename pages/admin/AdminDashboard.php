@@ -246,6 +246,7 @@ if ($sessionMessage) {
             </a>
             <div class="nav-links">
                 <a href="AdminDashboard.php">Dashboard</a>
+                <a href="ViewApplication.php">Applications</a>
                 <a href="EditProfile.php">Profile</a>
                 <form method="post" action="../logout.php" style="display: inline;">
                     <button type="submit" class="logout-btn" name="logout">Logout</button>
@@ -319,7 +320,7 @@ if ($sessionMessage) {
                     <div class="action-card">
                         <h3>View Applications</h3>
                         <p>Review and manage all applications</p>
-                        <a href="#" class="btn btn-primary">View All</a>
+                        <a href="ViewApplication.php" class="btn btn-primary">View All</a>
                     </div>
                     <div class="action-card">
                         <h3>Manage Students</h3>
