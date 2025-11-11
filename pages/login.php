@@ -21,22 +21,34 @@ if (isLoggedIn()) {
 
 $error = '';
 $userType = $_POST['userType'] ?? 'student'; // Default to student
+$staffRole = $_POST['staffRole'] ?? 'admin'; // Default to admin for staff
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loginId = trim($_POST['loginId'] ?? '');
     $password = $_POST['password'] ?? '';
     $userType = $_POST['userType'] ?? 'student';
+    $staffRole = $_POST['staffRole'] ?? 'admin'; // admin or committee
     $remember = isset($_POST['remember']) && $_POST['remember'] === 'on';
     
     // Validation
+    $loginFieldLabel = 'Student ID/Email';
+    if ($userType === 'staff') {
+        $loginFieldLabel = 'Email';
+    }
+    
+    // Validate staff role is selected when staff is chosen
+    if ($userType === 'staff' && empty($staffRole)) {
+        $staffRole = 'admin'; // Default to admin
+    }
+    
     if (empty($loginId) || empty($password)) {
-        $error = 'Please enter your ' . ($userType === 'staff' ? 'Email' : 'Student ID/Email') . ' and password.';
+        $error = 'Please enter your ' . $loginFieldLabel . ' and password.';
     } else {
         $conn = getDBConnection();
         
-        if ($userType === 'staff') {
-            // Check admin table for staff/admin login
+        if ($userType === 'staff' && $staffRole === 'admin') {
+            // Check admin table for admin login
             $stmt = $conn->prepare("SELECT id, name, email, password FROM admin WHERE email = ?");
             $stmt->bind_param("s", $loginId);
             $stmt->execute();
@@ -72,6 +84,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $error = 'Invalid email or password.';
             }
+            $stmt->close();
+        } elseif ($userType === 'staff' && $staffRole === 'committee') {
+            // Check committee table for committee login
+            $stmt = $conn->prepare("SELECT id, name, email, password FROM committee WHERE email = ?");
+            $stmt->bind_param("s", $loginId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 1) {
+                $committee = $result->fetch_assoc();
+                
+                // Verify password
+                if (password_verify($password, $committee['password'])) {
+                    // Set session variables for committee
+                    $_SESSION['user_id'] = $committee['id'];
+                    $_SESSION['user_name'] = $committee['name'];
+                    $_SESSION['user_email'] = $committee['email'];
+                    $_SESSION['user_role'] = 'committee';
+                    
+                    // Set success message
+                    $_SESSION['message'] = 'Welcome back, ' . htmlspecialchars($committee['name']) . '! You have been successfully logged in.';
+                    $_SESSION['message_type'] = 'success';
+                    
+                    // Handle "Remember Me" - set cookie for 30 days
+                    if ($remember) {
+                        $cookieValue = base64_encode($committee['id'] . ':committee:' . hash('sha256', $committee['password']));
+                        setcookie('remember_token', $cookieValue, time() + (30 * 24 * 60 * 60), '/'); // 30 days
+                    }
+                    
+                    // Redirect to committee dashboard
+                    header('Location: committee/CommitteeDashboard.php');
+                    exit();
+                } else {
+                    $error = 'Invalid email or password.';
+                }
+            } else {
+                $error = 'Invalid email or password.';
+            }
+            $stmt->close();
         } else {
             // Check users table for student login
             $stmt = $conn->prepare("SELECT id, full_name, email, student_id, password, role FROM users WHERE email = ? OR student_id = ?");
@@ -121,9 +172,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $error = 'Invalid Student ID/Email or password.';
             }
+            $stmt->close();
         }
         
-        $stmt->close();
         $conn->close();
     }
 }
@@ -154,6 +205,13 @@ if ($sessionMessage) {
             background: var(--light);
             padding: 4px;
             border-radius: var(--radius-sm);
+        }
+        #staffRoleSelector {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .user-type-option {
             flex: 1;
@@ -342,6 +400,15 @@ if ($sessionMessage) {
                         </div>
                     </div>
                     
+                    <!-- Staff Role Selector (only shown when Staff is selected) -->
+                    <div class="form-row" id="staffRoleSelector" style="display: <?php echo $userType === 'staff' ? 'block' : 'none'; ?>;">
+                        <label for="staffRole">Role</label>
+                        <select class="input" id="staffRole" name="staffRole">
+                            <option value="admin" <?php echo ($userType === 'staff' && $staffRole === 'admin') ? 'selected' : ''; ?>>Admin</option>
+                            <option value="committee" <?php echo ($userType === 'staff' && $staffRole === 'committee') ? 'selected' : ''; ?>>Committee</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-row">
                         <label for="loginId" class="login-field-label" id="loginLabel">Student ID / Email</label>
                         <input class="input" type="text" id="loginId" name="loginId" placeholder="e.g. B12345 or name@unikl.edu.my" value="<?php echo isset($_POST['loginId']) ? htmlspecialchars($_POST['loginId']) : ''; ?>" required />
@@ -398,6 +465,8 @@ if ($sessionMessage) {
     <script>
         // Update form based on user type selection
         const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+        const staffRoleSelect = document.getElementById('staffRole');
+        const staffRoleSelector = document.getElementById('staffRoleSelector');
         const loginLabel = document.getElementById('loginLabel');
         const loginInput = document.getElementById('loginId');
         const registerLink = document.getElementById('registerLink');
@@ -405,20 +474,38 @@ if ($sessionMessage) {
         function updateFormForUserType() {
             const selectedType = document.querySelector('input[name="userType"]:checked').value;
             
+            // Show/hide staff role selector
             if (selectedType === 'staff') {
-                loginLabel.textContent = 'Email';
-                loginInput.placeholder = 'e.g. admin@unikl.com';
-                registerLink.style.display = 'none';
+                staffRoleSelector.style.display = 'block';
+                staffRoleSelect.required = true;
+                updateFormForStaffRole();
             } else {
+                staffRoleSelector.style.display = 'none';
+                staffRoleSelect.required = false;
                 loginLabel.textContent = 'Student ID / Email';
                 loginInput.placeholder = 'e.g. B12345 or name@unikl.edu.my';
                 registerLink.style.display = 'block';
             }
         }
         
+        function updateFormForStaffRole() {
+            const role = staffRoleSelect.value;
+            loginLabel.textContent = 'Email';
+            
+            if (role === 'admin') {
+                loginInput.placeholder = 'e.g. admin@unikl.com';
+            } else if (role === 'committee') {
+                loginInput.placeholder = 'e.g. committee1@unikl.com';
+            }
+            
+            registerLink.style.display = 'none';
+        }
+        
         userTypeRadios.forEach(radio => {
             radio.addEventListener('change', updateFormForUserType);
         });
+        
+        staffRoleSelect.addEventListener('change', updateFormForStaffRole);
         
         // Initialize on page load
         updateFormForUserType();
