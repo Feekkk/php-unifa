@@ -9,12 +9,52 @@ $committeeId = $_SESSION['user_id'];
 $committeeName = $_SESSION['user_name'];
 $committeeEmail = $_SESSION['user_email'];
 
+// Handle approval form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_application'])) {
+    $applicationId = intval($_POST['application_id'] ?? 0);
+    $remarks = trim($_POST['remarks'] ?? '');
+    $amountApproved = trim($_POST['amount_approved'] ?? '');
+    
+    if ($applicationId > 0) {
+        $conn = getDBConnection();
+        
+        // Validate amount approved if provided
+        $amountApprovedValue = null;
+        if (!empty($amountApproved)) {
+            $amountApprovedValue = floatval($amountApproved);
+            if ($amountApprovedValue < 0) {
+                $_SESSION['message'] = 'Amount approved cannot be negative.';
+                $_SESSION['message_type'] = 'error';
+                header('Location: ViewApplication.php');
+                exit();
+            }
+        }
+        
+        // Update application: set status to 'approved', committee_remarks, amount_approved, reviewed_by, and reviewed_at
+        $stmt = $conn->prepare("UPDATE applications SET status = 'approved', committee_remarks = ?, amount_approved = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?");
+        $stmt->bind_param("sdii", $remarks, $amountApprovedValue, $committeeId, $applicationId);
+        
+        if ($stmt->execute()) {
+            $_SESSION['message'] = 'Application approved successfully!';
+            $_SESSION['message_type'] = 'success';
+            header('Location: ViewApplication.php');
+            exit();
+        } else {
+            $_SESSION['message'] = 'Error approving application: ' . $conn->error;
+            $_SESSION['message_type'] = 'error';
+        }
+        
+        $stmt->close();
+        $conn->close();
+    }
+}
+
 // Get filter parameters
 $statusFilter = $_GET['status'] ?? '';
 $categoryFilter = $_GET['category'] ?? '';
 $searchQuery = $_GET['search'] ?? '';
 
-// Build query - Committee can only see verified applications
+// Build query - Committee can see verified and approved applications
 $conn = getDBConnection();
 
 // Base query to get verified applications with student info and verifier info
@@ -26,11 +66,13 @@ $query = "SELECT
     u.phone as student_phone,
     u.course as student_course,
     u.semester as student_semester,
-    admin.name as verified_by_name
+    admin.name as verified_by_name,
+    committee.name as reviewed_by_name
 FROM applications a
 INNER JOIN users u ON a.user_id = u.id
 LEFT JOIN admin ON a.verified_by = admin.id
-WHERE a.status = 'verified'";
+LEFT JOIN committee ON a.reviewed_by = committee.id
+WHERE a.status = 'verified' OR a.status = 'approved'";
 
 $params = [];
 $types = '';
@@ -91,8 +133,8 @@ if (!empty($applications)) {
     }
 }
 
-// Get unique categories for filter (only from verified applications)
-$stmt = $conn->prepare("SELECT DISTINCT category FROM applications WHERE status = 'verified' ORDER BY category");
+// Get unique categories for filter (only from verified and approved applications)
+$stmt = $conn->prepare("SELECT DISTINCT category FROM applications WHERE status = 'verified' OR status = 'approved' ORDER BY category");
 $stmt->execute();
 $categoryResult = $stmt->get_result();
 $categories = [];
@@ -583,6 +625,93 @@ if ($sessionMessage) {
             display: block;
             margin-bottom: 4px;
         }
+        .approval-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid var(--light);
+        }
+        .approval-section h4 {
+            margin: 0 0 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .approval-form {
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--radius-sm);
+        }
+        .approval-form .form-row {
+            margin-bottom: 16px;
+        }
+        .approval-form .form-row:last-child {
+            margin-bottom: 0;
+        }
+        .approval-form label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        .approval-form textarea,
+        .approval-form input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .approval-form textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .approval-form textarea:focus,
+        .approval-form input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(10, 61, 98, 0.1);
+        }
+        .approval-form .form-help {
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .approval-form .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .btn-approve {
+            padding: 12px 24px;
+            background: #10b981;
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-approve:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .approval-info {
+            padding: 12px;
+            background: #d1fae5;
+            border: 1px solid #86efac;
+            border-radius: var(--radius-sm);
+            color: #065f46;
+            font-size: 0.9rem;
+        }
+        .approval-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
         @media (max-width: 768px) {
             .application-header {
                 flex-direction: column;
@@ -640,7 +769,7 @@ if ($sessionMessage) {
     <div class="applications-header">
         <div class="applications-content">
             <h1>Verified Applications</h1>
-            <p>View verified financial aid applications</p>
+            <p>Review and approve verified financial aid applications</p>
         </div>
     </div>
 
@@ -650,8 +779,12 @@ if ($sessionMessage) {
             <!-- Stats Bar -->
             <div class="stats-bar">
                 <div class="stat-item">
-                    <div class="label">Total Verified</div>
+                    <div class="label">Total Applications</div>
                     <div class="value"><?php echo count($applications); ?></div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Verified</div>
+                    <div class="value"><?php echo count(array_filter($applications, fn($a) => $a['status'] === 'verified')); ?></div>
                 </div>
                 <div class="stat-item">
                     <div class="label">Approved</div>
@@ -699,8 +832,8 @@ if ($sessionMessage) {
             <?php if (empty($applications)): ?>
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
-                    <h3>No Verified Applications Found</h3>
-                    <p>There are no verified applications matching your filters.</p>
+                    <h3>No Applications Found</h3>
+                    <p>There are no verified or approved applications matching your filters.</p>
                 </div>
             <?php else: ?>
                 <?php foreach ($applications as $app): 
@@ -878,6 +1011,51 @@ if ($sessionMessage) {
                                     <strong>Admin Remarks:</strong><br>
                                     <?php echo nl2br(htmlspecialchars($app['admin_notes'])); ?>
                                 </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Approval Section -->
+                        <div class="approval-section">
+                            <h4>Approval Section</h4>
+                            <?php if ($app['status'] === 'approved'): ?>
+                                <div class="approval-info">
+                                    <strong>✓ Approved Application</strong>
+                                    <?php if (!empty($app['reviewed_by_name'])): ?>
+                                        Reviewed by: <?php echo htmlspecialchars($app['reviewed_by_name']); ?>
+                                    <?php endif; ?>
+                                    <?php if (!empty($app['reviewed_at'])): ?>
+                                        <br>Reviewed on: <?php echo date('d M Y, h:i A', strtotime($app['reviewed_at'])); ?>
+                                    <?php endif; ?>
+                                    <?php if (!empty($app['amount_approved'])): ?>
+                                        <br>Amount Approved: RM <?php echo number_format($app['amount_approved'], 2); ?>
+                                    <?php endif; ?>
+                                    <?php if (!empty($app['committee_remarks'])): ?>
+                                        <div style="margin-top: 8px;">
+                                            <strong>Committee Remarks:</strong><br>
+                                            <?php echo nl2br(htmlspecialchars($app['committee_remarks'])); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php else: ?>
+                                <form method="post" action="" class="approval-form" onsubmit="return confirm('Are you sure you want to approve this application?');">
+                                    <input type="hidden" name="application_id" value="<?php echo $app['id']; ?>">
+                                    
+                                    <div class="form-row">
+                                        <label for="remarks_<?php echo $app['id']; ?>">Committee Remarks</label>
+                                        <textarea id="remarks_<?php echo $app['id']; ?>" name="remarks" placeholder="Enter your remarks (optional)" rows="4"><?php echo htmlspecialchars($app['committee_remarks'] ?? ''); ?></textarea>
+                                        <p class="form-help">Add any comments or notes about this application</p>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <label for="amount_approved_<?php echo $app['id']; ?>">Amount Approved (RM)</label>
+                                        <input type="number" id="amount_approved_<?php echo $app['id']; ?>" name="amount_approved" placeholder="Enter approved amount" step="0.01" min="0" value="<?php echo !empty($app['amount_approved']) ? number_format($app['amount_approved'], 2, '.', '') : ''; ?>" />
+                                        <p class="form-help">Leave blank if same as applied amount (RM <?php echo number_format($app['amount_applied'], 2); ?>)</p>
+                                    </div>
+                                    
+                                    <div class="form-actions">
+                                        <button type="submit" name="approve_application" class="btn-approve">Approve Application</button>
+                                    </div>
+                                </form>
                             <?php endif; ?>
                         </div>
                         </div>
